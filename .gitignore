@@ -1,0 +1,9 @@
+data/clickhouse/data/
+data/clickhouse/logs/
+data/flink/checkpoints/
+data/flink/data/
+data/flink/logs/
+data/kafka/data/
+data/kafka/logs/
+data/zookeeper/data/
+data/zookeeper/logs/

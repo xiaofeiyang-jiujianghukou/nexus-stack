@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: brain
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  http:
+    converters:
+      preferred-json-mapper: jackson2
+  jackson:
+    # 这一行相当于你的 mapper.setVisibility(...)
+    visibility:
+      field: any          # 对应 PropertyAccessor.FIELD, Visibility.ANY
+      getter: none        # 对应 PropertyAccessor.GETTER, Visibility.NONE
+      is-getter: none     # 对应 PropertyAccessor.IS_GETTER, Visibility.NONE
+    write:
+      date-timestamps: false
+    find-and-add-modules: true
