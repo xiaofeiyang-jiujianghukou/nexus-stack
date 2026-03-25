@@ -7,8 +7,10 @@ app:
       username: xiaofeiyang
       password: xfy@930112
       driver-class-name: com.mysql.cj.jdbc.Driver
+      host: 127.0.0.1
+      port: 3306
     clickhouse:
-      jdbc-url: jdbc:ch://127.0.0.1:28123/default
+      jdbc-url: jdbc:clickhouse://127.0.0.1:28123/default
       username: default
       password: 123456
       driver-class-name: com.clickhouse.jdbc.ClickHouseDriver

@@ -40,6 +40,7 @@ public class MockMemberProducer {
 
             String json = mapper.writeValueAsString(user);
 
+            log.info("MockMemberProducer send: " + json);
             // 👉 发送时指定 Key 为 userId，确保 Kafka Compact 生效
             producer.send(new ProducerRecord<>("member-topic", String.valueOf(userId), json));
 

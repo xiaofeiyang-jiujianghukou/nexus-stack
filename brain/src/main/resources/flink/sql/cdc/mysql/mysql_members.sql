@@ -1,0 +1,17 @@
+CREATE TABLE mysql_members (
+                               user_id     BIGINT,
+                               is_member   INT,
+                               ts         BIGINT,
+                               PRIMARY KEY (user_id) NOT ENFORCED
+) WITH (
+        'connector' = 'jdbc',
+        'url' = '${app.datasource.mysql.jdbc-url}',
+        'username' = '${app.datasource.mysql.username}',
+        'password' = '${app.datasource.mysql.password}',
+        'driver' = 'com.mysql.cj.jdbc.Driver',
+        'table-name' = 'members',
+        'lookup.cache' = 'PARTIAL',
+        'lookup.partial-cache.max-rows' = '20000',
+        'lookup.partial-cache.expire-after-access' = '5min',
+        'lookup.max-retries' = '3'
+      )

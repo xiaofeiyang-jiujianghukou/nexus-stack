@@ -25,7 +25,7 @@ public class MockUserProducer {
     // 定义用户池大小，必须与 OrderProducer 一致
     public static final int USER_POOL_SIZE = 1000;
 
-    @Scheduled(fixedRate = 2000) // 每2秒模拟一个用户的等级变化或新用户
+    //@Scheduled(fixedRate = 2000) // 每2秒模拟一个用户的等级变化或新用户
     public void sendUser() {
         try {
             // 联动核心：生成 1-1000 之间的 ID

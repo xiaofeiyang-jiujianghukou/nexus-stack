@@ -1,5 +1,6 @@
 package com.nexus.stack.brain;
 
+import com.nexus.stack.brain.job.flink.FlinkCoreJob;
 import com.nexus.stack.brain.job.joins.OrderUserMemberJoinJob;
 import com.nexus.stack.brain.service.DimensionSyncService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +21,10 @@ public class BrainApplication {
 	}
 
 	@Bean
-	public CommandLineRunner runFlinkJob(DimensionSyncService syncService, OrderUserMemberJoinJob flinkJob) {
+	public CommandLineRunner runFlinkJob(DimensionSyncService syncService, FlinkCoreJob flinkJob) {
 		return args -> {
 			// 1. 先同步数据库数据到 Kafka
-			syncService.syncUserDimensions();
+			//syncService.syncUserDimensions();
 
 			// 2. 启动 Flink 任务 (注意：Flink 的 run 是阻塞的，会占用主线程)
 			log.info("🌊 [Flink] 启动实时流计算任务...");

@@ -15,3 +15,6 @@ spring:
     write:
       date-timestamps: false
     find-and-add-modules: true
+lombok:
+  getter:
+    noIsPrefix: true

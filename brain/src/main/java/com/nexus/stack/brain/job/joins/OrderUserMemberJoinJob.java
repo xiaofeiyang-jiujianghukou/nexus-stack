@@ -55,8 +55,6 @@ public class OrderUserMemberJoinJob implements Serializable {
 
     public void run() throws Exception {
 
-        //StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(new Configuration());
         env.setParallelism(1);
 

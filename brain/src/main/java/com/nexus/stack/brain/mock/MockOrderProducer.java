@@ -22,7 +22,7 @@ public class MockOrderProducer {
     private final ObjectMapper mapper = new ObjectMapper();
     private final Random random = new Random();
 
-    @Scheduled(fixedRate = 1000) // 每1秒生成一个订单
+    @Scheduled(fixedRate = 3000) // 每1秒生成一个订单
     public void sendOrder() {
         try {
             // 联动核心：订单的 userId 必须从 1-1000 中随机选取

@@ -34,6 +34,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -41,52 +42,15 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Flink -->
 		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-clients</artifactId>
-			<version>1.18.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-connector-base</artifactId>
-			<version>1.18.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-table-runtime</artifactId>
-			<version>1.18.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-streaming-java</artifactId>
-			<version>1.18.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-runtime-web</artifactId>
-			<version>1.18.1</version>
-		</dependency>
-
-		<!-- Kafka -->
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-connector-kafka</artifactId>
-			<version>3.0.2-1.18</version>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
 		</dependency>
 
 		<!-- JSON -->
@@ -95,7 +59,6 @@
 			<artifactId>spring-boot-starter-json</artifactId>
 		</dependency>
 
-		<!-- 显式使用 Jackson2 -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
@@ -114,6 +77,12 @@
 			<version>2.0.61</version>
 		</dependency>
 
+		<!-- JDBC -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jdbc</artifactId>
+		</dependency>
+
 		<!-- MySQL -->
 		<dependency>
 			<groupId>com.mysql</groupId>
@@ -121,22 +90,106 @@
 			<version>9.1.0</version>
 		</dependency>
 
-		<!-- ClickHouse -->
+		<!-- ==================== Flink Core (统一版本) ==================== -->
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-java</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-streaming-java</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-clients</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-runtime-web</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+
+		<!-- Table API & SQL -->
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-table-api-java-bridge</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-table-planner_2.12</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-table-runtime</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+
+		<!-- Connectors -->
+		<!-- ==================== Kafka Connector (必须使用 sql 版本) ==================== -->
+		<!-- 强烈推荐使用这个 sql-connector 版本，它包含了 table factory -->
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-sql-connector-kafka</artifactId>
+			<version>3.0.2-1.18</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-connector-kafka</artifactId>
+			<version>3.0.2-1.18</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-connector-jdbc</artifactId>
+			<version>3.1.2-1.18</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-connector-base</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+
+		<!-- MySQL CDC (Ververica 2.4.1 兼容 Flink 1.18) -->
+		<dependency>
+			<groupId>com.ververica</groupId>
+			<artifactId>flink-connector-mysql-cdc</artifactId>
+			<version>2.4.1</version>
+		</dependency>
+
+		<!-- JSON 格式 -->
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-json</artifactId>
+			<version>1.18.1</version>
+		</dependency>
+
+		<!-- ==================== ClickHouse 部分（核心优化） ==================== -->
+
+		<!-- 1. ClickHouse JDBC Driver - 必须使用稳定兼容版本（强烈推荐） -->
 		<dependency>
 			<groupId>com.clickhouse</groupId>
 			<artifactId>clickhouse-jdbc</artifactId>
-			<version>0.9.8</version>
+			<version>0.6.2</version>
+			<classifier>all</classifier>   <!-- shaded all jar，最推荐 -->
 		</dependency>
 
-		<dependency>
-			<groupId>com.clickhouse</groupId>
-			<artifactId>clickhouse-client</artifactId>
-			<version>0.9.8</version>
-		</dependency>
+		<!-- 2. 推荐使用官方/社区专用 ClickHouse Connector（远优于 jdbc） -->
+		<!-- 官方 ClickHouse 团队维护的 connector（Flink 1.18 对应版本） -->
+		<!--<dependency>
+			<groupId>com.clickhouse.flink</groupId>
+			<artifactId>flink-connector-clickhouse-1.17</artifactId>
+			<version>1.18.1</version>   &lt;!&ndash; 或最新 1.18.1 兼容包 &ndash;&gt;
+		</dependency>-->
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jdbc</artifactId>
+		<!-- 如果上面官方的找不到，可以用这个社区版（稳定） -->
+        <dependency>
+            <groupId>io.github.therealhieu</groupId>
+            <artifactId>flink-connector-clickhouse</artifactId>
+            <version>1.19.0-1.0.0</version>
 		</dependency>
 	</dependencies>
 
