@@ -239,12 +239,11 @@ const GMVDashboard = () => {
       },
     },
     tooltip: {
-      formatter: (datum) => {
-        return {
-          name: 'GMV',
-          value: `¥${datum.gmv.toLocaleString()}`,
-        };
-      },
+      title: (datum) => `时间: ${datum.time}`,
+      items: [(datum) => ({
+        name: 'GMV',
+        value: `¥${datum.gmv.toLocaleString()}`,
+      })],
     },
     animation: {
       appear: {
@@ -282,12 +281,11 @@ const GMVDashboard = () => {
       },
     },
     tooltip: {
-      formatter: (datum) => {
-        return {
-          name: 'GMV',
-          value: `¥${datum.gmv.toLocaleString()}`,
-        };
-      },
+      title: (datum) => `时间: ${datum.time}`,
+      items: [(datum) => ({
+        name: 'GMV',
+        value: `¥${datum.gmv.toLocaleString()}`,
+      })],
     },
   };
 

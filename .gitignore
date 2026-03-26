@@ -7,3 +7,4 @@ data/kafka/data/
 data/kafka/logs/
 data/zookeeper/data/
 data/zookeeper/logs/
+data/mysql/data/
