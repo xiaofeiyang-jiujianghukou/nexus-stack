@@ -1,0 +1,22 @@
+{
+  "seconds": 692.11,
+  "minute": 7562.57,
+  "hour": 355643.55,
+  "halfDay": 2844708.45,
+  "day": 2844708.45,
+  "week": 2844708.45,
+  "halfMonth": 2844708.45,
+  "month": 2844708.45,
+  "halfHour": null,
+  "year": 2844708.45,
+  "overview": {
+    "gmv_last_1h": [],
+    "gmv_last_1w": [],
+    "gmv_last_15d": [],
+    "gmv_last_1y": [],
+    "gmv_last_1d": [],
+    "gmv_last_6mouth": [],
+    "gmv_last_12h": [],
+    "gmv_last_1mouth": []
+  }
+}

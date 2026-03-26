@@ -1,4 +1,4 @@
-package com.nexus.stack.brain.kafka;
+package com.nexus.stack.brain.config.kafka;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.context.annotation.Bean;

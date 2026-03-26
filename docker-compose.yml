@@ -22,6 +22,21 @@ services:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       retries: 5
+  # ========================
+  # Redis
+  # ========================
+  redis:
+    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/redis:7
+    container_name: smart-redis
+    restart: always
+    ports:
+      - "${REDIS_PORT_EXTERNAL}:${REDIS_PORT_INTERNAL}"
+    networks:
+      - smart-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      retries: 5
 
   zookeeper:
     image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/cp-zookeeper:7.5.0

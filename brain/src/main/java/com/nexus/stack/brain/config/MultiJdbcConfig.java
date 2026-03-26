@@ -13,7 +13,7 @@ import javax.sql.DataSource;
 @Configuration
 public class MultiJdbcConfig {
 
-    @Bean
+    @Bean(name = "mysqlDataSource")
     @Primary // 将 MySQL 设为主数据源
     @ConfigurationProperties(prefix = "app.datasource.mysql")
     public DataSource mysqlDataSource() {

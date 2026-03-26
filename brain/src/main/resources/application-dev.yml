@@ -1,3 +1,16 @@
+spring:
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: xfy@930112
+    timeout: 5000ms
+    lettuce:
+      pool:
+        max-active: 16
+        max-idle: 8
+        min-idle: 2
+        max-wait: -1ms
+
 # 自定义数据源配置（注意这里不是 spring.datasource，避免触发自动配置）
 app:
   datasource:
@@ -20,22 +33,22 @@ kafka:
 
 
 # Redis 配置 (使用 Lettuce 连接池)
-data:
-  redis:
-    host: 127.0.0.1 # 指向 docker-compose 中的服务名
-    port: 6379
-    password:
-    timeout: 5000ms
-    # Lettuce 连接池配置 (依赖 commons-pool2)
-    lettuce:
-      pool:
-        max-active: 16   # 最大连接数 (根据并发量调整，虚拟线程可适当调大)
-        max-idle: 8      # 最大空闲连接
-        min-idle: 2      # 最小空闲连接 (保持少量长连接，避免冷启动延迟)
-        max-wait: -1ms   # 获取连接最大等待时间 (-1 表示无限等待，防止报错)
-      clustering:
-        refresh:
-          adaptive: true # 集群模式自适应刷新 (单机可忽略)
+#data:
+#  redis:
+#    host: 127.0.0.1 # 指向 docker-compose 中的服务名
+#    port: 6379
+#    password: xfy@930112
+#    timeout: 5000ms
+#    # Lettuce 连接池配置 (依赖 commons-pool2)
+#    lettuce:
+#      pool:
+#        max-active: 16   # 最大连接数 (根据并发量调整，虚拟线程可适当调大)
+#        max-idle: 8      # 最大空闲连接
+#        min-idle: 2      # 最小空闲连接 (保持少量长连接，避免冷启动延迟)
+#        max-wait: -1ms   # 获取连接最大等待时间 (-1 表示无限等待，防止报错)
+#      clustering:
+#        refresh:
+#          adaptive: true # 集群模式自适应刷新 (单机可忽略)
 
 # 日志配置 (可选)
 logging:

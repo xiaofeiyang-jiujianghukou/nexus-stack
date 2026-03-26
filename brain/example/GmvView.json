@@ -1,0 +1,25 @@
+{
+  "seconds": 1226.68,
+  "minute": 3601.99,
+  "halfHour": 264975.72,
+  "hour": 477165.23,
+  "halfDay": 3335697.45,
+  "day": 3335697.45,
+  "week": 3335697.45,
+  "halfMonth": 3335697.45,
+  "month": 3335697.45,
+  "halfYear": 3335697.45,
+  "year": 3335697.45,
+  "overview": {
+    "gmv_last_1m": [],
+    "gmv_last_1h": [],
+    "gmv_last_1w": [],
+    "gmv_last_30m": [],
+    "gmv_last_15d": [],
+    "gmv_last_1y": [],
+    "gmv_last_1d": [],
+    "gmv_last_6mouth": [],
+    "gmv_last_12h": [],
+    "gmv_last_1mouth": []
+  }
+}

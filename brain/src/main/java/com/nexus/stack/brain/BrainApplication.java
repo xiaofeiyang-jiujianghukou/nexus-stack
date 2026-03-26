@@ -9,6 +9,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -16,7 +18,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+//@SpringBootApplication(exclude = {
+//		DataSourceAutoConfiguration.class,
+//		DataSourceTransactionManagerAutoConfiguration.class,
+//		JdbcTemplateAutoConfiguration.class
+//})
+@SpringBootApplication
 @EnableScheduling
 @EnableAsync
 @Slf4j
