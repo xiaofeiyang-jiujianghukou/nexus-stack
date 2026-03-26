@@ -1,18 +1,24 @@
 package com.nexus.stack.brain;
 
-import com.nexus.stack.brain.job.flink.FlinkCoreJob;
-import com.nexus.stack.brain.job.joins.OrderUserMemberJoinJob;
+import com.nexus.stack.brain.job.cdc.mysql.FlinkSqlGmvJob;
+import com.nexus.stack.brain.job.cdc.mysql.FlinkSqlWideOrdersJob;
 import com.nexus.stack.brain.service.DimensionSyncService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableScheduling
+@EnableAsync
 @Slf4j
 public class BrainApplication {
 
@@ -21,15 +27,57 @@ public class BrainApplication {
 	}
 
 	@Bean
-	public CommandLineRunner runFlinkJob(DimensionSyncService syncService, FlinkCoreJob flinkJob) {
+	public ApplicationRunner runFlinkJobs(
+			FlinkSqlGmvJob gmvJob,
+			FlinkSqlWideOrdersJob wideOrdersJob) {
 		return args -> {
-			// 1. 先同步数据库数据到 Kafka
-			//syncService.syncUserDimensions();
+			ExecutorService executor = Executors.newFixedThreadPool(2);
 
-			// 2. 启动 Flink 任务 (注意：Flink 的 run 是阻塞的，会占用主线程)
-			log.info("🌊 [Flink] 启动实时流计算任务...");
-			flinkJob.run();
+			// 异步启动第一个作业
+			executor.execute(() -> {
+				try {
+					log.info("🌊 [Flink] 启动实时流计算任务 [FlinkSqlGmvJob]...");
+					gmvJob.run();
+				} catch (Exception e) {
+					log.error("GMV作业失败", e);
+				}
+			});
+
+			// 异步启动第二个作业
+			executor.execute(() -> {
+				try {
+					log.info("🌊 [Flink] 启动实时流计算任务 [FlinkSqlWideOrdersJob]...");
+					wideOrdersJob.run();
+				} catch (Exception e) {
+					log.error("宽表作业失败", e);
+				}
+			});
+
+			// 不关闭线程池，让作业持续运行
+			// executor.shutdown();
+
+			log.info("✅ 所有 Flink 作业已提交");
+			log.info("🔗 Flink Web UI: http://localhost:8081");
 		};
 	}
+
+	/*@Bean(name = "gmvJob")
+	public CommandLineRunner runFlinkJob(FlinkSqlGmvJob gmvJob) {
+		return args -> {
+			// 启动 Flink 任务 (注意：Flink 的 run 是阻塞的，会占用主线程)
+			log.info("🌊 [Flink] 启动实时流计算任务 [FlinkSqlGmvJob]...");
+			gmvJob.run();
+		};
+	}*/
+
+	/*@Bean(name = "wideOrdersJob")
+	public CommandLineRunner runFlinkSqlWideOrdersJob(FlinkSqlWideOrdersJob wideOrdersJob) {
+		return args -> {
+
+			// 启动 Flink 任务 (注意：Flink 的 run 是阻塞的，会占用主线程)
+			log.info("🌊 [Flink] 启动实时流计算任务 [FlinkSqlWideOrdersJob]...");
+			wideOrdersJob.run();
+		};
+	}*/
 
 }

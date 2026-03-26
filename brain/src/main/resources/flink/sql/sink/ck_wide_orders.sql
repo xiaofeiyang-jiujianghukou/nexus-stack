@@ -1,7 +1,7 @@
-CREATE TABLE ck_wide_orders (
+CREATE TABLE IF NOT EXISTS ck_wide_orders (
                                 order_id    BIGINT,
                                 user_id     BIGINT,
-                                amount      DOUBLE,
+                                amount      DECIMAL(10, 2),
                                 level       STRING,
                                 is_member   INT,
 

@@ -3,7 +3,7 @@ app:
   datasource:
     mysql:
       # 建议加上时区和SSL配置，避免 8.0 常见的连接失败
-      jdbc-url: jdbc:mysql://127.0.0.1:33306/brain_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      jdbc-url: jdbc:mysql://127.0.0.1:33306/brain_db?useSSL=false&connectionTimeZone=UTC&allowPublicKeyRetrieval=true
       username: root
       password: 123456
       driver-class-name: com.mysql.cj.jdbc.Driver

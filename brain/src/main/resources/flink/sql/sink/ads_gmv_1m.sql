@@ -1,6 +1,6 @@
-CREATE TABLE ads_gmv_1m (
+CREATE TABLE IF NOT EXISTS ads_gmv_1m (
     stat_time   TIMESTAMP_LTZ(3),
-    gmv         DOUBLE
+    gmv         DECIMAL(10, 2)
 ) WITH (
   'connector' = 'clickhouse',
   'url' = '${app.datasource.clickhouse.jdbc-url}',

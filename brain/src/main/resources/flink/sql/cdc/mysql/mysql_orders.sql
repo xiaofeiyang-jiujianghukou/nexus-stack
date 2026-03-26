@@ -1,7 +1,7 @@
-CREATE TABLE mysql_orders (
+CREATE TABLE IF NOT EXISTS mysql_orders (
                               order_id    BIGINT,
                               user_id     BIGINT,
-                              amount      DOUBLE,
+                              amount      DECIMAL(10, 2),
                               ts          BIGINT,
 
                               row_time AS TO_TIMESTAMP_LTZ(ts, 3),

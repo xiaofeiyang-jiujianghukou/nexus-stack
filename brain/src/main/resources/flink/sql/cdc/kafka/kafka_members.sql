@@ -1,4 +1,4 @@
-CREATE TABLE kafka_members (
+CREATE TABLE IF NOT EXISTS kafka_members (
                                userId STRING,
                                isMember BOOLEAN,
                                ts BIGINT,

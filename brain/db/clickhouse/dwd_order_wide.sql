@@ -5,7 +5,7 @@ CREATE TABLE default.dwd_order_wide
 (
     order_id   Int64,
     user_id    Int64,
-    amount     Float64,
+    amount     Decimal(10, 2),
     level      String,
     is_member  Int32,
     ts         Int64

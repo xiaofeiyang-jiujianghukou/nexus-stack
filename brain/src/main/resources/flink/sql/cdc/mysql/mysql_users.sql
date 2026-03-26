@@ -1,4 +1,4 @@
-CREATE TABLE mysql_users (
+CREATE TABLE IF NOT EXISTS mysql_users (
                              user_id        BIGINT,
                              level         STRING,
                              register_time  BIGINT,

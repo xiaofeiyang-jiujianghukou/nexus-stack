@@ -1,4 +1,4 @@
-CREATE TABLE kafka_orders (
+CREATE TABLE IF NOT EXISTS kafka_orders (
                               orderId BIGINT,
                               userId BIGINT,
                               amount DOUBLE,

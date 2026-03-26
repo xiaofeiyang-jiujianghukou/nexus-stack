@@ -1,10 +1,9 @@
-package com.nexus.stack.brain.job.flink;
+package com.nexus.stack.brain.job.cdc.mysql;
 
 import com.nexus.stack.brain.loader.SqlScriptManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.Executors;
@@ -22,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
-public class FlinkCoreJob {
+public class FlinkSqlWideOrdersJob {
 
     @Autowired
     private SqlScriptManager sqlManager; // 注入工具类
@@ -30,31 +28,28 @@ public class FlinkCoreJob {
     @Qualifier("chDataSource")
     private DataSource clickhouseDataSource;
 
-
-    public void run() throws Exception {
+    //@Override
+    public void run() {
         Configuration conf = new Configuration();
 
         // 强制关闭 upsert 物料化
+        conf.setString("rest.bind-port", "8081");
         conf.setString("table.exec.sink.upsert-materialize", "NONE");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(conf);
         env.setParallelism(1);
         env.disableOperatorChaining();
 
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
-
-        log.info("🚀 开始创建 Flink 本地环境，Web UI: http://localhost:8081");
-
         try {
             // 清理表
-            tableEnv.executeSql("DROP TABLE IF EXISTS ck_wide_orders");
-            tableEnv.executeSql("DROP TABLE IF EXISTS mysql_orders");   // 注意改成 kafka_orders
-            tableEnv.executeSql("DROP TABLE IF EXISTS mysql_users");
-            tableEnv.executeSql("DROP TABLE IF EXISTS mysql_members");
-            log.info("✅ 已清理旧表");
+//            tableEnv.executeSql("DROP TABLE IF EXISTS ck_wide_orders");
+//            tableEnv.executeSql("DROP TABLE IF EXISTS mysql_orders");   // 注意改成 kafka_orders
+//            tableEnv.executeSql("DROP TABLE IF EXISTS mysql_users");
+//            tableEnv.executeSql("DROP TABLE IF EXISTS mysql_members");
+//            log.info("✅ 已清理旧表");
 
             // 注册表
             log.info("正在注册 mysql_orders...");
-            //tableEnv.executeSql(sqlManager.load("flink/sql/cdc/kafka/kafka_orders.sql"));
             tableEnv.executeSql(sqlManager.load("flink/sql/cdc/mysql/mysql_orders.sql"));
 
             log.info("正在注册 mysql_users...");
@@ -73,7 +68,7 @@ public class FlinkCoreJob {
                     sqlManager.load("flink/sql/insert/mysql/insert_ck_wide_orders.sql")
             );
 
-            log.info("✅ INSERT 语句已提交，作业开始运行...");
+            log.info("✅ 订单宽表作业 已提交运行...");
 
             // 延时5s触发 ClickHouse 去重
             executeOptimizeFinalWithDelay("default.dwd_order_wide", 5);
@@ -81,9 +76,10 @@ public class FlinkCoreJob {
             // 让作业一直运行（本地测试强烈推荐加上）
             result.await();
 
+            log.info("✅ 订单宽表作业 await...");
+
         } catch (Exception e) {
             log.error("❌ Flink 作业启动失败！", e);
-            throw e;
         }
     }
 

@@ -1,4 +1,4 @@
-CREATE TABLE mysql_members (
+CREATE TABLE IF NOT EXISTS mysql_members (
                                user_id     BIGINT,
                                is_member   INT,
                                ts         BIGINT,

@@ -1,4 +1,4 @@
-CREATE TABLE kafka_users (
+CREATE TABLE IF NOT EXISTS kafka_users (
                              userId STRING,
                              level STRING,
                              registerTime BIGINT,
