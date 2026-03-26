@@ -1,0 +1,10 @@
+# 添加以下配置
+execution.checkpointing.interval: 30s
+execution.checkpointing.mode: EXACTLY_ONCE
+execution.checkpointing.min-pause: 10s
+execution.checkpointing.timeout: 10min
+execution.checkpointing.max-concurrent-checkpoints: 1
+execution.checkpointing.unaligned.enabled: true
+state.backend: rocksdb
+state.backend.incremental: true
+state.checkpoints.dir: file:///home/xiaofeiyang/projects/ai/nexus-stack/checkpoints

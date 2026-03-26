@@ -10,8 +10,9 @@ CREATE TABLE mysql_members (
         'password' = '${app.datasource.mysql.password}',
         'driver' = 'com.mysql.cj.jdbc.Driver',
         'table-name' = 'members',
+        --'lookup.cache' = 'NONE'
         'lookup.cache' = 'PARTIAL',
         'lookup.partial-cache.max-rows' = '20000',
-        'lookup.partial-cache.expire-after-access' = '5min',
+        'lookup.partial-cache.expire-after-access' = '5s',
         'lookup.max-retries' = '3'
       )
