@@ -38,6 +38,10 @@ public class GmvDashboardController {
     public GmvAllResponse gmvAll() {
         GmvAllResponse response = new GmvAllResponse();
 
+        // 增加用户数/会员数
+        response.setUserCount(redisHelper.getValue(USER_COUNT, Integer.class));
+        response.setVipCount(redisHelper.getValue(VIP_COUNT, Integer.class));
+
         // 1️⃣ 单值 GMV（秒/分钟/小时/天/周/月/年）
         response.setSeconds(redisHelper.getValue(GMV_FOR_SECONDS, BigDecimal.class));
         response.setMinute(redisHelper.getValue(GMV_FOR_MINUTE, BigDecimal.class));

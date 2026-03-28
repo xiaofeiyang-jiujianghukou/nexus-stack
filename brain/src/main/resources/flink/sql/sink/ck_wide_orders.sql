@@ -1,23 +1,19 @@
-CREATE TABLE IF NOT EXISTS ck_wide_orders (
-                                order_id    BIGINT,
-                                user_id     BIGINT,
-                                amount      DECIMAL(10, 2),
-                                level       STRING,
-                                is_member   INT,
-
-                                ts          BIGINT,
-
-                                PRIMARY KEY (order_id) NOT ENFORCED
+CREATE TABLE ck_wide_orders (
+                                     order_id  BIGINT,
+                                     user_id   BIGINT,
+                                     amount    DECIMAL(10, 2),
+                                     `level`   STRING,
+                                     is_member INT,
+                                     ts        BIGINT,
+                                     PRIMARY KEY (order_id) NOT ENFORCED
 ) WITH (
-      'connector' = 'clickhouse',
-      'url' = '${app.datasource.clickhouse.jdbc-url}',
-      'table-name' = 'dwd_order_wide',
-      'username' = '${app.datasource.clickhouse.username}',
-      'password' = '${app.datasource.clickhouse.password}',
-      'sink.batch-size' = '1000',
-      'sink.flush-interval' = '1s',
-      'sink.max-retries' = '3',
-
-      'sink.parallelism' = '1',
-      'sink.ignore-delete' = 'true'
-      );
+    'connector' = 'jdbc',
+    'url' = '${app.datasource.clickhouse.jdbc-url}',
+    'table-name' = 'dwd_order_wide',
+    'username' = '${app.datasource.clickhouse.username}',
+    'password' = '${app.datasource.clickhouse.password}',
+    'driver' = 'com.clickhouse.jdbc.ClickHouseDriver',
+    'sink.buffer-flush.max-rows' = '5000',
+    'sink.buffer-flush.interval' = '2s',
+    'sink.max-retries' = '3'
+);

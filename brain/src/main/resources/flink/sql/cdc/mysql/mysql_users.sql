@@ -2,7 +2,6 @@ CREATE TABLE IF NOT EXISTS mysql_users (
                              user_id        BIGINT,
                              level         STRING,
                              register_time  BIGINT,
-                             ts            BIGINT,
                              PRIMARY KEY (user_id) NOT ENFORCED
 ) WITH (
         'connector' = 'jdbc',

@@ -2,6 +2,8 @@ package com.nexus.stack.brain.consts;
 
 public class RedisConsts {
 
+    public static String USER_COUNT = "user_count";
+    public static String VIP_COUNT = "vip_count";
     public static String GMV_FOR_SECONDS = "gmv_last_10s";
     public static String GMV_FOR_MINUTE = "gmv_last_1m";
     public static String GMV_FOR_HALF_HOUR = "gmv_last_30m";

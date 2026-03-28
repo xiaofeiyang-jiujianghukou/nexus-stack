@@ -30,11 +30,23 @@ public class GmvSyncJob {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
+    private JdbcTemplate mysqlJdbcTemplate;
+    @Autowired
     @Qualifier("chJdbcTemplate")
     private JdbcTemplate clickhouseJdbcTemplate;        // ClickHouse
 
     @Scheduled(fixedRate = 10, timeUnit = TimeUnit.SECONDS)
     public void gmvForSecond() {
+
+        Integer userCount = mysqlJdbcTemplate.queryForObject(
+                "SELECT count(*) FROM users",
+                Integer.class);
+        stringRedisTemplate.opsForValue().set(USER_COUNT, userCount.toString());
+
+        Integer vipCount = mysqlJdbcTemplate.queryForObject(
+                "SELECT count(*) FROM members WHERE is_member = 1",
+                Integer.class);
+        stringRedisTemplate.opsForValue().set(VIP_COUNT, vipCount.toString());
 
         BigDecimal gmv = clickhouseJdbcTemplate.queryForObject(
                 "SELECT gmv FROM ads_gmv_1m ORDER BY stat_time DESC LIMIT 1",

@@ -22,6 +22,8 @@ const GMVDashboard = () => {
   const [gmvData, setGmvData] = useState([]);
   const [currentGmv, setCurrentGmv] = useState(0);
   const [totalGmv, setTotalGmv] = useState(0);
+  const [userCount, setUserCount] = useState(0);
+  const [vipCount, setVipCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -180,6 +182,8 @@ const GMVDashboard = () => {
       setGmvData(selectedData);
       setCurrentGmv(currentValue);
       setTotalGmv(totalValue);
+      setUserCount(data.userCount || 0);
+      setVipCount(data.vipCount || 0);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching GMV data:', err);
@@ -330,7 +334,7 @@ const GMVDashboard = () => {
       )}
 
       <Row gutter={[24, 24]}>
-        <Col xs={24} sm={12} md={8}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title="当前 GMV"
@@ -343,7 +347,7 @@ const GMVDashboard = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={8}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
               title="累计 GMV"
@@ -356,13 +360,26 @@ const GMVDashboard = () => {
             />
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={8}>
+        <Col xs={24} sm={12} md={6}>
           <Card>
             <Statistic
-              title="数据点数"
-              value={gmvData.length}
-              styles={{ content: { color: '#faad14', fontSize: '28px' } }}
-              suffix="个"
+              title="用户数"
+              value={userCount}
+              precision={0}
+              styles={{ content: { color: '#722ed1', fontSize: '28px' } }}
+              suffix="人"
+              loading={loading}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Card>
+            <Statistic
+              title="会员数"
+              value={vipCount}
+              precision={0}
+              styles={{ content: { color: '#eb2f96', fontSize: '28px' } }}
+              suffix="人"
               loading={loading}
             />
           </Card>

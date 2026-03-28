@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS mysql_members (
                                user_id     BIGINT,
                                is_member   INT,
-                               ts         BIGINT,
                                PRIMARY KEY (user_id) NOT ENFORCED
 ) WITH (
         'connector' = 'jdbc',

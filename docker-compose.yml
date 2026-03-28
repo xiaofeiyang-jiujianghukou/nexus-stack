@@ -3,104 +3,247 @@
 services:
 
   # ========================
+  # 后端服务
+  # ========================
+  brain:
+    build:
+      context: ./brain
+      dockerfile: Dockerfile
+    container_name: nexus-stack-brain
+    networks:
+      - nexus-stack-net
+    ports:
+      - "38080:8080"
+    depends_on:
+      redis: { condition: service_healthy }
+      clickhouse: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+
+    environment:
+      # JVM 网络
+      JAVA_TOOL_OPTIONS: >
+        -Djava.net.preferIPv4Stack=true
+        -Djava.net.useSystemProxies=false
+        -Dhttp.nonProxyHosts="localhost|127.0.0.1|mysql|redis|clickhouse|kafka|zookeeper"
+
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: pro
+
+      # ========================
+      # MySQL（关键）
+      # ========================
+      APP_DATASOURCE_MYSQL_URL: jdbc:mysql://mysql:3306/brain_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      APP_DATASOURCE_MYSQL_USERNAME: root
+      APP_DATASOURCE_MYSQL_PASSWORD: 123456
+
+      # ========================
+      # ClickHouse
+      # ========================
+      APP_DATASOURCE_CLICKHOUSE_URL: jdbc:clickhouse://clickhouse:8123/default
+      APP_DATASOURCE_CLICKHOUSE_USERNAME: default
+      APP_DATASOURCE_CLICKHOUSE_PASSWORD: 123456
+
+      # ========================
+      # Redis
+      # ========================
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: 123456
+
+      # ========================
+      # Kafka
+      # ========================
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      # ========================
+      # Flink
+      # ========================
+      FLINK_SQL-GATEWAY_ADDRESS: flink-jobmanager:28081
+
+  # ========================
+  # 前端
+  # ========================
+  brain-view:
+    build:
+      context: ./brain-view
+      dockerfile: Dockerfile
+    container_name: nexus-stack-brain-view
+    networks:
+      - nexus-stack-net
+    ports:
+      - "33000:80"
+    depends_on:
+      - brain
+
+  # ========================
   # MySQL
   # ========================
   mysql:
     image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/mysql:8.0
+    user: "999:999"  # MySQL 容器内用户
     container_name: nexus-stack-mysql
+    networks:
+      - nexus-stack-net
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: brain_db
     ports:
-      - "${MYSQL_PORT_EXTERNAL}:${MYSQL_PORT_INTERNAL}"
+      - "33306:3306"
     volumes:
       - ./data/mysql/data:/var/lib/mysql
       - ./data/mysql/init:/docker-entrypoint-initdb.d
-    command: --default-authentication-plugin=mysql_native_password
+    command:
+      - --bind-address=0.0.0.0
+      - --default-authentication-plugin=mysql_native_password
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
       interval: 10s
       retries: 5
+
   # ========================
   # Redis
   # ========================
   redis:
     image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/redis:7
-    container_name: smart-redis
+    container_name: nexus-stack-redis
+    networks:
+      - nexus-stack-net
     restart: always
     ports:
-      - "${REDIS_PORT_EXTERNAL}:${REDIS_PORT_INTERNAL}"
-    networks:
-      - smart-network
+      - "36379:6379"
+    command: >
+      redis-server 
+      --requirepass 123456 
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - ./data/redis/data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD-SHELL", "redis-cli -a 123456 ping | grep PONG"]
       interval: 10s
       retries: 5
 
+  # ========================
+  # Zookeeper
+  # ========================
   zookeeper:
     image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/cp-zookeeper:7.5.0
     container_name: nexus-stack-zookeeper
+    networks:
+      - nexus-stack-net
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
     volumes:
       - ./data/zookeeper/data:/var/lib/zookeeper/data
       - ./data/zookeeper/logs:/var/lib/zookeeper/log
 
+  # ========================
+  # Kafka
+  # ========================
   kafka:
     image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/cp-kafka:7.5.0
     container_name: nexus-stack-kafka
+    networks:
+      - nexus-stack-net
     depends_on:
       - zookeeper
     ports:
+      - "39092:39092"
       - "9092:9092"
-      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+
+      # 内外双监听（关键）
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:39092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:39092
+
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
     volumes:
       - ./data/kafka/data:/var/lib/kafka/data
 
+    healthcheck:
+      test: ["CMD", "bash", "-c", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 10s
+      retries: 5
+
+  # ========================
+  # ClickHouse
+  # ========================
   clickhouse:
     image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/clickhouse-server:23
+    user: "101:101"  # ClickHouse 容器内用户
     container_name: nexus-stack-clickhouse
+    networks:
+      - nexus-stack-net
     environment:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: 123456
-      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ports:
-      - "28123:8123"
-      - "29000:9000"
+      - "38123:8123"
+      - "39000:9000"
     volumes:
-      # 👈 核心修改：将 ClickHouse 数据目录挂载到宿主机，防止重启丢表
       - ./data/clickhouse/data:/var/lib/clickhouse
       - ./data/clickhouse/logs:/var/log/clickhouse-server
-    ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
+      - ./data/clickhouse/init:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 10s
+      retries: 5
 
+  # ========================
+  # Flink JobManager
+  # ========================
   flink-jobmanager:
-    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/flink:1.18
+    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/flink:1.18-java17-nexus
     container_name: nexus-stack-jobmanager
+    networks:
+      - nexus-stack-net
     command: jobmanager
     ports:
-      - "28081:8081"
-    volumes:
-      - ./data/flink/checkpoints:/opt/flink/checkpoints
+      - "38081:8081"
+      - "36123:6123"  # 添加 RPC 端口映射
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
 
+  # ========================
+  # Flink TaskManager
+  # ========================
   flink-taskmanager:
-    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/flink:1.18
+    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/flink:1.18-java17-nexus
     container_name: nexus-stack-taskmanager
+    networks:
+      - nexus-stack-net
     depends_on:
       - flink-jobmanager
     command: taskmanager
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
-    volumes:
-      - ./data/flink/checkpoints:/opt/flink/checkpoints
+
+  # ========================
+  # Flink SQL Gateway
+  # ========================
+  flink-sql-gateway:
+    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/flink:1.18-java17-nexus
+    container_name: nexus-stack-sql-gateway
+    networks:
+      - nexus-stack-net
+    depends_on:
+      - flink-jobmanager
+    ports:
+      - "38083:8083"
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    command: >
+      /opt/flink/bin/sql-gateway.sh start-foreground
+      -Dsql-gateway.endpoint.rest.address=0.0.0.0
+      -Dsql-gateway.endpoint.rest.port=8083
+      -Djobmanager.rpc.address=flink-jobmanager
+
+networks:
+  nexus-stack-net:
+    driver: bridge

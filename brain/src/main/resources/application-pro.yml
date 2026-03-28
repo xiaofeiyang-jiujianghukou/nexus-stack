@@ -1,0 +1,69 @@
+spring:
+  redis:
+    # 直接使用服务名 redis
+    host: redis
+    port: 6379
+    password: 123456
+    timeout: 5000ms
+    lettuce:
+      pool:
+        max-active: 16
+        max-idle: 8
+        min-idle: 2
+        max-wait: -1ms
+
+# 自定义数据源配置（注意这里不是 spring.datasource，避免触发自动配置）
+app:
+  datasource:
+    mysql:
+      # 直接使用服务名 mysql，端口 3306，数据库名 brain_db
+      jdbc-url: jdbc:mysql://mysql:3306/brain_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=10000
+      username: root
+      password: 123456
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hostname: mysql
+      port: 3306
+      # 显式配置 Hikari 的启动容错
+      hikari:
+        initialization-fail-timeout: 60000 # 允许在启动时连不上并重试 60 秒
+        connection-timeout: 30000
+    clickhouse:
+      # 直接使用服务名 clickhouse，内部端口 8123 (HTTP) 或 9000 (Native)
+      jdbc-url: jdbc:clickhouse://clickhouse:8123/default
+      username: default
+      password: 123456
+      driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
+
+kafka:
+  # 直接使用服务名 kafka，内部端口 9092
+  bootstrap-servers: kafka:9092
+
+flink:
+  rest:
+    address: localhost:3081
+
+
+# 日志配置 (可选)
+logging:
+  level:
+    com.truejarvis: DEBUG
+    com.baomidou.mybatisplus: DEBUG
+
+springdoc:
+  # API 文档路径 (默认 /v3/api-docs)
+  api-docs:
+    path: /v3/api-docs
+  # Swagger UI 路径 (默认 /swagger-ui.html -> 重定向到 /swagger-ui/index.html)
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true # 开发环境开启
+    operations-sorter: alpha # 按字母顺序排序接口
+    tags-sorter: alpha
+    # 尝试将 Swagger UI 请求映射到后端 API (解决部分网关代理问题)
+    url: /v3/api-docs
+
+  # 分组显示 (可选，用于区分不同模块)
+  group-configs:
+    - group: "core-api"
+      paths-to-match: "/**"
+      packages-to-scan: "com.nexus.stack.brain.controller"

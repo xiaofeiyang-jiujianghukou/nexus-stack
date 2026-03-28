@@ -11,10 +11,8 @@
  Target Server Version : 90300 (9.3.0)
  File Encoding         : 65001
 
- Date: 26/03/2026 10:42:59
+ Date: 27/03/2026 00:06:51
 */
-CREATE DATABASE IF NOT EXISTS brain_db DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_general_ci;
-USE brain_db;
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -36,7 +34,7 @@ DROP TABLE IF EXISTS `orders`;
 CREATE TABLE `orders` (
   `order_id` bigint NOT NULL AUTO_INCREMENT COMMENT '订单ID',
   `user_id` bigint DEFAULT NULL COMMENT '下单用户ID',
-  `amount` double DEFAULT NULL COMMENT '订单金额',
+  `amount` decimal(10,2) DEFAULT NULL COMMENT '订单金额',
   `ts` bigint DEFAULT NULL COMMENT '订单创建时间',
   PRIMARY KEY (`order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -136,7 +134,7 @@ DROP EVENT IF EXISTS `evt_generate_order`;
 delimiter ;;
 CREATE EVENT `evt_generate_order`
 ON SCHEDULE
-EVERY '2' MINUTE STARTS '2026-03-25 17:01:41'
+EVERY '5' DAY STARTS '2026-03-25 17:01:41'
 DO CALL insert_one_order()
 ;;
 delimiter ;
@@ -148,7 +146,7 @@ DROP EVENT IF EXISTS `evt_generate_user`;
 delimiter ;;
 CREATE EVENT `evt_generate_user`
 ON SCHEDULE
-EVERY '3' MINUTE STARTS '2026-03-25 17:01:41'
+EVERY '30' DAY STARTS '2026-03-25 17:01:41'
 DO CALL insert_one_user()
 ;;
 delimiter ;
@@ -160,7 +158,7 @@ DROP EVENT IF EXISTS `evt_toggle_member`;
 delimiter ;;
 CREATE EVENT `evt_toggle_member`
 ON SCHEDULE
-EVERY '5' MINUTE STARTS '2026-03-25 17:01:41'
+EVERY '60' DAY STARTS '2026-03-25 17:01:41'
 DO CALL toggle_member_status()
 ;;
 delimiter ;

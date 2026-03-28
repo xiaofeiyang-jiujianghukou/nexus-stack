@@ -12,6 +12,8 @@ import java.util.Map;
 @AllArgsConstructor
 @ToString
 public class GmvAllResponse {
+    private Integer userCount;
+    private Integer vipCount;
     private BigDecimal seconds;
     private BigDecimal minute;
     private BigDecimal halfHour;

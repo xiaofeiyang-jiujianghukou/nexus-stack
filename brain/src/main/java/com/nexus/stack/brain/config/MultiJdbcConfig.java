@@ -1,5 +1,6 @@
 package com.nexus.stack.brain.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -10,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 
+@Slf4j
 @Configuration
 public class MultiJdbcConfig {
 
@@ -29,12 +31,14 @@ public class MultiJdbcConfig {
     @Bean
     @Primary
     public JdbcTemplate mysqlJdbcTemplate(DataSource mysqlDataSource) {
+        log.info("mysqlDataSource Url -> {}", ((com.zaxxer.hikari.HikariDataSource) mysqlDataSource).getJdbcUrl());
         return new JdbcTemplate(mysqlDataSource);
     }
 
     @Bean(name = "chJdbcTemplate")
     public JdbcTemplate clickhouseJdbcTemplate(
             @Qualifier("chDataSource") DataSource clickhouseDataSource) {
+        log.info("clickhouseDataSource Url -> {}", ((com.zaxxer.hikari.HikariDataSource) clickhouseDataSource).getJdbcUrl());
         return new JdbcTemplate(clickhouseDataSource);
     }
 }
