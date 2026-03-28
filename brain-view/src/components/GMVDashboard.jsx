@@ -180,7 +180,7 @@ const GMVDashboard = () => {
       }
 
       setGmvData(selectedData);
-      setCurrentGmv(currentValue);
+      setCurrentGmv(data.seconds || 0);
       setTotalGmv(totalValue);
       setUserCount(data.userCount || 0);
       setVipCount(data.vipCount || 0);
