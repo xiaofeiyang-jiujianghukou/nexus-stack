@@ -3,6 +3,10 @@ FROM node:20 AS build
 
 WORKDIR /app
 COPY package*.json ./
+
+# 配置 npm 使用国内镜像
+RUN npm config set registry https://registry.npmmirror.com
+
 RUN npm install
 COPY . .
 RUN npm run build   # 输出在 /app/dist

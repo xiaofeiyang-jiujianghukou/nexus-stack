@@ -24,51 +24,21 @@ mkdir -p \
     redis/logs \
     kafka/logs
 
-# 创建初始化脚本（如果不存在）
-if [ ! -f mysql/init/01_init.sql ]; then
-    echo "📝 创建 MySQL 初始化脚本..."
-    cat > mysql/init/01_init.sql << 'EOF'
-CREATE TABLE IF NOT EXISTS users (
-    user_id BIGINT PRIMARY KEY,
-    level VARCHAR(50) DEFAULT 'NORMAL',
-    register_time BIGINT
-);
+# 自动修复权限（让容器能写入）
+echo "设置目录权限..."
 
-CREATE TABLE IF NOT EXISTS members (
-    user_id BIGINT PRIMARY KEY,
-    is_member TINYINT DEFAULT 0
-);
+# ClickHouse 需要 uid 101
+sudo chown -R 101:101 data/clickhouse 2>/dev/null || true
+sudo chmod -R 755 data/clickhouse 2>/dev/null || true
 
-CREATE TABLE IF NOT EXISTS orders (
-    order_id BIGINT PRIMARY KEY,
-    user_id BIGINT,
-    amount DECIMAL(10,2),
-    ts BIGINT,
-    INDEX idx_user_id (user_id)
-);
-EOF
-fi
+# MySQL 需要 uid 999
+sudo chown -R 999:999 data/mysql 2>/dev/null || true
+sudo chmod -R 755 data/mysql 2>/dev/null || true
 
-if [ ! -f clickhouse/init/01_init.sql ]; then
-    echo "📝 创建 ClickHouse 初始化脚本..."
-    cat > clickhouse/init/01_init.sql << 'EOF'
-CREATE TABLE IF NOT EXISTS dwd_order_wide (
-    order_id Int64,
-    user_id Int64,
-    amount Float64,
-    level String,
-    is_member Int32,
-    ts Int64
-) ENGINE = MergeTree()
-ORDER BY order_id;
+# Redis 需要 uid 999
+sudo chown -R 999:999 data/redis 2>/dev/null || true
 
-CREATE TABLE IF NOT EXISTS ads_gmv_1m (
-    stat_time DateTime,
-    gmv Float64
-) ENGINE = MergeTree()
-ORDER BY stat_time;
-EOF
-fi
+echo "✅ 权限设置完成"
 
 # 启动服务
 echo "🚀 启动服务..."
