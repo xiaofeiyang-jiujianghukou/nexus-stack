@@ -1,5 +1,5 @@
 # Stage 1: build react app with Vite
-FROM node:20 AS build
+FROM crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/node:20 AS build
 
 WORKDIR /app
 COPY package*.json ./
@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build   # 输出在 /app/dist
 
 # Stage 2: serve with nginx
-FROM nginx:alpine
+FROM crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/nginx:alpine
 
 # 删除默认 nginx 页面
 RUN rm -rf /usr/share/nginx/html/*
