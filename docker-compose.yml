@@ -25,7 +25,8 @@ services:
       clickhouse: { condition: service_healthy }
       mysql: { condition: service_healthy }
       #kafka: { condition: service_healthy }
-
+    cpus: 0.3      # 限制 0.3 核
+    mem_limit: 768m  # 限制 768MB 内存
     environment:
       # JVM 网络
       JAVA_TOOL_OPTIONS: >
@@ -81,6 +82,8 @@ services:
       - "33000:80"
     depends_on:
       - brain
+    cpus: 0.1
+    mem_limit: 128m
 
   # ========================
   # MySQL
@@ -109,6 +112,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s # 给 MySQL 30秒的启动缓冲期，这期间不算失败
+    cpus: 0.5      # MySQL 分配 0.5 核
+    mem_limit: 512m
 
   # ========================
   # Redis
@@ -132,6 +137,8 @@ services:
       test: ["CMD-SHELL", "redis-cli -a 123456 ping | grep PONG"]
       interval: 10s
       retries: 5
+    cpus: 0.2
+    mem_limit: 256m
 
 #  # ========================
 #  # Zookeeper
@@ -203,6 +210,8 @@ services:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
       interval: 10s
       retries: 5
+    cpus: 0.5      # ClickHouse 分配 0.5 核
+    mem_limit: 1g   # ClickHouse 分配 1GB 内存
 
   # ========================
   # Flink JobManager
@@ -221,8 +230,8 @@ services:
 #    volumes:
 #      - ./data/flink/checkpoints:/opt/flink/checkpoints
 #      - ./data/flink/savepoints:/opt/flink/savepoints
-    cpus: 0.5
-    mem_limit: 1g
+    cpus: 0.2      # JobManager 只需要少量 CPU
+    mem_limit: 768m  # JobManager 内存
 
   # ========================
   # Flink TaskManager
@@ -245,8 +254,8 @@ services:
 #    volumes:
 #      - ./data/flink/checkpoints:/opt/flink/checkpoints
 #      - ./data/flink/savepoints:/opt/flink/savepoints
-    cpus: 1
-    mem_limit: 2g
+    cpus: 0.8      # TaskManager 分配 0.8 核（核心计算）
+    mem_limit: 1.2g  # TaskManager 内存限制
 
   # ========================
   # Flink SQL Gateway
@@ -273,8 +282,8 @@ services:
       -Djobmanager.rpc.address=flink-jobmanager
 #    volumes:
 #      - ./data/flink/checkpoints:/opt/flink/checkpoints
-    cpus: 0.25
-    mem_limit: 512m
+    cpus: 0.1
+    mem_limit: 256m
 
 networks:
   nexus-stack-net:
