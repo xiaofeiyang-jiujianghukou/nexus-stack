@@ -1,18 +1,11 @@
-data/clickhouse/data/
-data/clickhouse/logs/
-data/flink/task/checkpoints/
-data/flink/task/data/
-data/flink/task/logs/
-data/flink/job/checkpoints/
-data/flink/job/data/
-data/flink/job/logs/
-data/flink/gateway/checkpoints/
-data/flink/gateway/data/
-data/flink/gateway/logs/
-data/kafka/data/
-data/kafka/logs/
-data/zookeeper/data/
-data/zookeeper/logs/
-data/mysql/data/
-data/redis/data/
+data
+
 .idea
+# 数据目录（脚本自动创建）
+data_bak/
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp

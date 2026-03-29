@@ -14,9 +14,16 @@ services:
       - nexus-stack-net
     ports:
       - "38080:8080"
+    # 👇 修正后的写法：策略和次数分开
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
     depends_on:
       redis: { condition: service_healthy }
       clickhouse: { condition: service_healthy }
+      mysql: { condition: service_healthy }
       #kafka: { condition: service_healthy }
 
     environment:
@@ -32,21 +39,21 @@ services:
       # ========================
       # MySQL（关键）
       # ========================
-      APP_DATASOURCE_MYSQL_URL: jdbc:mysql://mysql:3306/brain_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      APP_DATASOURCE_MYSQL_URL: jdbc:mysql://nexus-stack-mysql:3306/brain_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&defaultAuthenticationPlugin=caching_sha2_password&connectTimeout=30000
       APP_DATASOURCE_MYSQL_USERNAME: root
       APP_DATASOURCE_MYSQL_PASSWORD: 123456
 
       # ========================
       # ClickHouse
       # ========================
-      APP_DATASOURCE_CLICKHOUSE_URL: jdbc:clickhouse://clickhouse:8123/default
+      APP_DATASOURCE_CLICKHOUSE_URL: jdbc:clickhouse://nexus-stack-clickhouse:8123/default
       APP_DATASOURCE_CLICKHOUSE_USERNAME: default
       APP_DATASOURCE_CLICKHOUSE_PASSWORD: 123456
 
       # ========================
       # Redis
       # ========================
-      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_HOST: nexus-stack-redis
       SPRING_REDIS_PORT: 6379
       SPRING_REDIS_PASSWORD: 123456
 
@@ -58,7 +65,7 @@ services:
       # ========================
       # Flink
       # ========================
-      FLINK_SQL-GATEWAY_ADDRESS: flink-jobmanager:28081
+      FLINK_SQL_GATEWAY_ADDRESS: flink-jobmanager:28081
 
   # ========================
   # 前端
@@ -92,14 +99,16 @@ services:
       - "33306:3306"
     volumes:
       - ./data/mysql/data:/var/lib/mysql
-      - ./data/mysql/init:/docker-entrypoint-initdb.d
+      - ./init/mysql/init:/docker-entrypoint-initdb.d
     command:
       - --bind-address=0.0.0.0
-      - --default-authentication-plugin=mysql_native_password
+      - --default-authentication-plugin=caching_sha2_password
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
       interval: 10s
-      retries: 5
+      timeout: 5s
+      retries: 10
+      start_period: 30s # 给 MySQL 30秒的启动缓冲期，这期间不算失败
 
   # ========================
   # Redis
@@ -189,7 +198,7 @@ services:
     volumes:
       - ./data/clickhouse/data:/var/lib/clickhouse
       - ./data/clickhouse/logs:/var/log/clickhouse-server
-      - ./data/clickhouse/init:/docker-entrypoint-initdb.d/
+      - ./init/clickhouse/init:/docker-entrypoint-initdb.d/
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
       interval: 10s
@@ -209,6 +218,9 @@ services:
       - "36123:6123"  # 添加 RPC 端口映射
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+#    volumes:
+#      - ./data/flink/checkpoints:/opt/flink/checkpoints
+#      - ./data/flink/savepoints:/opt/flink/savepoints
     cpus: 0.5
     mem_limit: 1g
 
@@ -225,6 +237,14 @@ services:
     command: taskmanager
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - |-
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+        state.savepoints.dir: file:///opt/flink/savepoints
+#    volumes:
+#      - ./data/flink/checkpoints:/opt/flink/checkpoints
+#      - ./data/flink/savepoints:/opt/flink/savepoints
     cpus: 1
     mem_limit: 2g
 
@@ -242,11 +262,17 @@ services:
       - "38083:8083"
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - |-
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        state.checkpoints.dir: file:///opt/flink/checkpoints
     command: >
       /opt/flink/bin/sql-gateway.sh start-foreground
       -Dsql-gateway.endpoint.rest.address=0.0.0.0
       -Dsql-gateway.endpoint.rest.port=8083
       -Djobmanager.rpc.address=flink-jobmanager
+#    volumes:
+#      - ./data/flink/checkpoints:/opt/flink/checkpoints
     cpus: 0.25
     mem_limit: 512m
 

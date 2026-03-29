@@ -17,9 +17,9 @@ app:
   datasource:
     mysql:
       # 直接使用服务名 mysql，端口 3306，数据库名 brain_db
-      jdbc-url: jdbc:mysql://mysql:3306/brain_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=10000
-      username: root
-      password: 123456
+      jdbc-url: ${APP_DATASOURCE_MYSQL_URL}
+      username: ${APP_DATASOURCE_MYSQL_USERNAME}
+      password: ${APP_DATASOURCE_MYSQL_PASSWORD}
       driver-class-name: com.mysql.cj.jdbc.Driver
       hostname: mysql
       port: 3306
@@ -29,18 +29,18 @@ app:
         connection-timeout: 30000
     clickhouse:
       # 直接使用服务名 clickhouse，内部端口 8123 (HTTP) 或 9000 (Native)
-      jdbc-url: jdbc:clickhouse://clickhouse:8123/default
-      username: default
-      password: 123456
+      jdbc-url: ${APP_DATASOURCE_CLICKHOUSE_URL}
+      username: ${APP_DATASOURCE_CLICKHOUSE_USERNAME}
+      password: ${APP_DATASOURCE_CLICKHOUSE_PASSWORD}
       driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
 
 kafka:
   # 直接使用服务名 kafka，内部端口 9092
-  bootstrap-servers: kafka:9092
+  bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
 
 flink:
   rest:
-    address: localhost:3081
+    address: ${FLINK_SQL_GATEWAY_ADDRESS}
 
 
 # 日志配置 (可选)

@@ -11,7 +11,7 @@
  Target Server Version : 80045 (8.0.45)
  File Encoding         : 65001
 
- Date: 28/03/2026 21:35:28
+ Date: 29/03/2026 21:10:45
 */
 
 SET NAMES utf8mb4;
@@ -51,6 +51,69 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ----------------------------
+-- Procedure structure for init_data
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `init_data`;
+delimiter ;;
+CREATE PROCEDURE `init_data`()
+BEGIN
+    DECLARE i INT DEFAULT 0;
+    DECLARE v_start_time DATETIME;
+    DECLARE v_end_time DATETIME;
+    
+    SET v_start_time = NOW();
+    SELECT CONCAT('[', v_start_time, '] 开始初始化数据...') AS action_log;
+    
+    -- 1. 先清空现有数据
+    DELETE FROM orders;
+    DELETE FROM members;
+    DELETE FROM users;
+    
+    -- 2. 重置自增ID
+    ALTER TABLE users AUTO_INCREMENT = 1;
+    ALTER TABLE orders AUTO_INCREMENT = 1;
+    
+    -- 3. 循环生成 50 个用户
+    WHILE i < 50 DO
+        CALL insert_one_user();
+        SET i = i + 1;
+    END WHILE;
+    
+    SELECT CONCAT('✅ 已生成 ', i, ' 个用户') AS action_log;
+    
+    -- 4. 重置循环变量
+    SET i = 0;
+    
+    -- 5. 循环执行 50 次会员状态切换（产生会员变化）
+    WHILE i < 50 DO
+        CALL toggle_member_status();
+        SET i = i + 1;
+    END WHILE;
+    
+    SELECT CONCAT('✅ 已执行 ', i, ' 次会员状态切换') AS action_log;
+    
+    -- 6. 循环生成 200 个订单（确保有足够数据）
+    SET i = 0;
+    WHILE i < 200 DO
+        CALL insert_one_order();
+        SET i = i + 1;
+    END WHILE;
+    
+    SELECT CONCAT('✅ 已生成 ', i, ' 个订单') AS action_log;
+    
+    SET v_end_time = NOW();
+    SELECT CONCAT('[', v_end_time, '] 数据初始化完成！总耗时: ', TIMESTAMPDIFF(SECOND, v_start_time, v_end_time), ' 秒') AS action_log;
+    
+    -- 7. 输出统计信息
+    SELECT 
+        (SELECT COUNT(*) FROM users) AS 用户总数,
+        (SELECT COUNT(*) FROM members WHERE is_member = 1) AS 会员数,
+        (SELECT COUNT(*) FROM orders) AS 订单总数;
+END
+;;
+delimiter ;
+
+-- ----------------------------
 -- Procedure structure for insert_one_order
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `insert_one_order`;
@@ -59,15 +122,25 @@ CREATE PROCEDURE `insert_one_order`()
 BEGIN
     DECLARE v_user_id BIGINT;
     DECLARE v_amount  DOUBLE;
+    DECLARE v_user_exists INT DEFAULT 0;
 
-    SELECT user_id INTO v_user_id 
-    FROM users 
-    ORDER BY RAND() LIMIT 1;
-
-    SET v_amount = ROUND(10 + RAND() * 990, 2);
-
-    INSERT INTO orders (user_id, amount, ts)
-    VALUES (v_user_id, v_amount, UNIX_TIMESTAMP() * 1000);
+    -- 检查用户表是否有数据
+    SELECT COUNT(*) INTO v_user_exists FROM users;
+    
+    IF v_user_exists > 0 THEN
+        -- 随机选择一个用户
+        SELECT user_id INTO v_user_id 
+        FROM users 
+        ORDER BY RAND() 
+        LIMIT 1;
+        
+        IF v_user_id IS NOT NULL THEN
+            SET v_amount = ROUND(10 + RAND() * 990, 2);
+            
+            INSERT INTO orders (user_id, amount, ts)
+            VALUES (v_user_id, v_amount, UNIX_TIMESTAMP() * 1000);
+        END IF;
+    END IF;
 END
 ;;
 delimiter ;
@@ -81,21 +154,29 @@ CREATE PROCEDURE `insert_one_user`()
 BEGIN
     DECLARE v_user_id BIGINT;
     DECLARE v_ts      BIGINT;
+    DECLARE v_level   VARCHAR(10);
 
     SET v_ts = UNIX_TIMESTAMP() * 1000;   -- 毫秒级时间戳
+    
+    -- 随机等级：70% NORMAL，30% VIP
+    IF RAND() < 0.3 THEN
+        SET v_level = 'VIP';
+    ELSE
+        SET v_level = 'NORMAL';
+    END IF;
 
     -- 插入用户
     INSERT INTO users (level, register_time)
-    VALUES ('NORMAL', v_ts);
+    VALUES (v_level, v_ts);
 
     SET v_user_id = LAST_INSERT_ID();
 
-    -- 插入 members 表（默认不是会员）
+    -- 插入 members 表（默认不是会员，如果是VIP可以随机决定是否会员）
     INSERT INTO members (user_id, is_member)
-    VALUES (v_user_id, 0);
+    VALUES (v_user_id, IF(v_level = 'VIP', IF(RAND() < 0.8, 1, 0), 0));
 
     -- 日志
-    SELECT CONCAT('[', FROM_UNIXTIME(v_ts/1000), '] 新用户生成 → user_id=', v_user_id) AS action_log;
+    SELECT CONCAT('[', FROM_UNIXTIME(v_ts/1000), '] 新用户生成 → user_id=', v_user_id, ', level=', v_level) AS action_log;
 END
 ;;
 delimiter ;
@@ -162,7 +243,7 @@ DROP EVENT IF EXISTS `evt_toggle_member`;
 delimiter ;;
 CREATE EVENT `evt_toggle_member`
 ON SCHEDULE
-EVERY '5' SECOND STARTS '2026-03-25 17:01:41'
+EVERY '10' MINUTE STARTS '2026-03-25 17:01:41'
 DO CALL toggle_member_status()
 ;;
 delimiter ;

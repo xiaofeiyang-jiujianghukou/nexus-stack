@@ -1,67 +1,145 @@
 #!/bin/bash
-set -e
+
+# 清屏
+clear
 
 echo "========================================="
-echo "Nexus Stack 部署脚本"
-echo "========================================="
-
-# 颜色定义
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-# 检查 Docker
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}❌ Docker 未安装${NC}"
-    exit 1
-fi
-
-# 创建必要的目录
-echo "📁 创建目录..."
-mkdir -p \
-    mysql/init \
-    clickhouse/init \
-    redis/logs \
-    kafka/logs
-
-# 自动修复权限（让容器能写入）
-echo "设置目录权限..."
-
-# ClickHouse 需要 uid 101
-sudo chown -R 101:101 data/clickhouse 2>/dev/null || true
-sudo chmod -R 755 data/clickhouse 2>/dev/null || true
-
-# MySQL 需要 uid 999
-sudo chown -R 999:999 data/mysql 2>/dev/null || true
-sudo chmod -R 755 data/mysql 2>/dev/null || true
-
-# Redis 需要 uid 999
-sudo chown -R 999:999 data/redis 2>/dev/null || true
-
-echo "✅ 权限设置完成"
-
-# 启动服务
-echo "🚀 启动服务..."
-docker-compose up -d
-
-# 等待服务就绪
-echo "⏳ 等待服务就绪..."
-sleep 10
-
-# 显示状态
-echo ""
-echo "========================================="
-echo -e "${GREEN}✅ 部署完成！${NC}"
+echo "       Nexus Stack 管理脚本"
 echo "========================================="
 echo ""
-echo "服务访问地址:"
-echo "  MySQL:      localhost:33306"
-echo "  ClickHouse: localhost:38123"
-echo "  Redis:      localhost:36379"
-echo "  Kafka:      localhost:9092 / 39092"
-echo "  Flink:      localhost:38081"
-echo "  SQL Gateway: localhost:38083"
+
+# 显示服务状态
+echo "当前服务状态:"
 echo ""
-echo "查看状态: docker-compose ps"
-echo "停止服务: ./shutdown.sh stop"
-echo "查看日志: docker-compose logs -f"
+docker-compose ps 2>/dev/null || echo "  未运行"
+echo ""
+
+echo "请选择操作:"
+echo ""
+echo "  1) 启动所有服务（自动初始化目录+权限）"
+echo "  2) 停止所有服务"
+echo "  3) 重启指定服务"
+echo "  4) 查看日志"
+echo "  5) 查看服务状态"
+echo "  6) 停止并删除容器（保留数据）"
+echo "  7) 完全清理（删除所有数据）⚠️"
+echo "  0) 退出"
+echo ""
+echo -n "请输入选项 [0-7]: "
+read choice
+
+case $choice in
+    1)
+        echo ""
+        echo "初始化目录和权限..."
+
+        # 创建 data 目录（如果不存在）
+        mkdir -p data
+        chown $(id -u):$(id -g) data
+
+        # 创建目录（如果已存在会跳过）
+        mkdir -p \
+            data/mysql/{data,logs} \
+            data/clickhouse/{data,logs} \
+            data/redis/{data,logs} \
+            data/zookeeper/{data,logs} \
+            data/kafka/{data,logs} \
+            data/flink/{checkpoints,savepoints}
+
+        # 修复权限（核心）
+        sudo chown -R 101:101 data/clickhouse 2>/dev/null
+        sudo chmod -R 755 data/clickhouse 2>/dev/null
+
+        sudo chown -R 999:999 data/mysql 2>/dev/null
+        sudo chmod -R 755 data/mysql 2>/dev/null
+
+        sudo chown -R 999:999 data/redis 2>/dev/null
+        sudo chmod -R 755 data/mysql 2>/dev/null
+
+        sudo chown -R 9999:9999 data/flink 2>/dev/null
+        sudo chmod -R 755 data/flink 2>/dev/null
+
+        sudo chown -R $(id -u):$(id -g) data/zookeeper 2>/dev/null
+        sudo chown -R $(id -u):$(id -g) data/kafka 2>/dev/null
+
+
+        echo "✅ 权限设置完成"
+        echo ""
+
+        echo "启动所有服务..."
+        docker-compose up -d
+
+        echo ""
+        echo "✅ 服务已启动"
+        echo ""
+        echo "访问地址:"
+        IP=$(curl -s ifconfig.me 2>/dev/null || echo "localhost")
+        echo "  前端大屏: http://${IP}:33000"
+        echo "  后端 API: http://${IP}:38080"
+        echo "  Flink:    http://${IP}:38081"
+        ;;
+    2)
+        echo ""
+        echo "停止所有服务..."
+        docker-compose stop
+        echo "✅ 服务已停止"
+        ;;
+    3)
+        echo ""
+        echo "运行中的服务:"
+        docker-compose ps --services 2>/dev/null
+        echo ""
+        echo -n "请输入服务名称: "
+        read service
+        if [ -n "$service" ]; then
+            docker-compose restart "$service"
+            echo "✅ 服务 $service 已重启"
+        fi
+        ;;
+    4)
+        echo ""
+        echo "服务列表:"
+        docker-compose ps --services 2>/dev/null
+        echo ""
+        echo -n "请输入服务名称 (回车查看所有): "
+        read service
+        if [ -n "$service" ]; then
+            docker-compose logs -f "$service"
+        else
+            docker-compose logs -f --tail=50
+        fi
+        ;;
+    5)
+        echo ""
+        docker-compose ps
+        ;;
+    6)
+        echo ""
+        echo "将停止并删除容器，数据将保留"
+        read -p "确认继续? (y/N): " confirm
+        if [[ $confirm == [yY] ]]; then
+            docker-compose down
+            echo "✅ 容器已删除，数据已保留"
+        fi
+        ;;
+    7)
+        echo ""
+        echo "⚠️ 危险操作！这将删除所有数据"
+        echo -n "请输入 DELETE 确认: "
+        read confirm
+        if [ "$confirm" = "DELETE" ]; then
+            docker-compose down -v
+            echo "✅ 已清理所有容器和数据"
+        fi
+        ;;
+    0)
+        echo "再见！"
+        exit 0
+        ;;
+    *)
+        echo "无效选项"
+        ;;
+esac
+
+echo ""
+echo "操作完成"

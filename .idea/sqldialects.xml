@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
-    <file url="file://$PROJECT_DIR$/data/clickhouse/init/default_db.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/init/clickhouse/init/default_db.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/init/mysql/init/01_brain_db.sql" dialect="GenericSQL" />
   </component>
 </project>
