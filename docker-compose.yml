@@ -45,14 +45,14 @@ services:
       # ========================
       # MySQL（关键）
       # ========================
-      APP_DATASOURCE_MYSQL_URL: jdbc:mysql://nexus-stack-mysql:3306/brain_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&defaultAuthenticationPlugin=caching_sha2_password&connectTimeout=30000
+      APP_DATASOURCE_MYSQL_URL: jdbc:mysql://mysql:3306/brain_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&connectTimeout=30000
       APP_DATASOURCE_MYSQL_USERNAME: root
       APP_DATASOURCE_MYSQL_PASSWORD: 123456
 
       # ========================
       # ClickHouse
       # ========================
-      APP_DATASOURCE_CLICKHOUSE_URL: jdbc:clickhouse://nexus-stack-clickhouse:8123/default
+      APP_DATASOURCE_CLICKHOUSE_URL: jdbc:clickhouse://clickhouse:8123/default
       APP_DATASOURCE_CLICKHOUSE_USERNAME: default
       APP_DATASOURCE_CLICKHOUSE_PASSWORD: 123456
 
