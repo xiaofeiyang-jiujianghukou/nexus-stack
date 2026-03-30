@@ -1,5 +1,6 @@
 package com.nexus.stack.brain.job.cdc.rest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -11,7 +12,7 @@ import org.jspecify.annotations.NonNull;
 
 public class OrderWideSqlSubmitter {
 
-    private static final String SQL_GATEWAY_URL = "http://172.17.0.1:38083";
+    private static String SQL_GATEWAY_URL = "http://172.17.0.1:38083";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
@@ -59,10 +60,13 @@ public class OrderWideSqlSubmitter {
 
 
     public static void main(String[] args) {
-        run();
+        run(null);
     }
 
-    public static void run() {
+    public static Void run(String sqlGatewayUrl) {
+        if (StringUtils.isNotBlank(sqlGatewayUrl)) {
+            SQL_GATEWAY_URL = sqlGatewayUrl;
+        }
         try {
             // 1. 创建会话（只创建一次）
             String sessionHandle = createSession();
@@ -105,6 +109,7 @@ public class OrderWideSqlSubmitter {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     /**

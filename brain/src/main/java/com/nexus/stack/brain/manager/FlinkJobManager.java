@@ -17,6 +17,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -40,14 +42,14 @@ public class FlinkJobManager {
     // 存储正在运行的作业线程
     private final ConcurrentHashMap<String, Thread> runningJobThreads = new ConcurrentHashMap<>();
 
-    // 作业配置 - 使用 Runnable
+    // 作业配置 - 使用 Supplier，延迟执行
     private final List<JobConfig> jobs = List.of(
             new JobConfig("order-wide",
                     "insert-into_default_catalog.default_database.ck_wide_orders",
-                    OrderWideSqlSubmitter::run),
+                    () -> OrderWideSqlSubmitter.run(sqlGatewayUrl)),  // Supplier 包装，不立即执行
             new JobConfig("gmv",
                     "insert-into_default_catalog.default_database.ads_gmv_1m",
-                    GmvSqlSubmitter::run)
+                    () -> GmvSqlSubmitter.run(sqlGatewayUrl))        // 同样使用 Supplier
     );
 
     @PostConstruct
@@ -304,7 +306,8 @@ public class FlinkJobManager {
         Thread jobThread = new Thread(() -> {
             try {
                 log.info("作业 '{}' 开始执行...", jobName);
-                job.getRunnable().run();
+                job.getSupplier().get();  // ✅ 延迟执行
+                //job.getRunnable().run();
                 log.info("作业 '{}' 执行完成", jobName);
             } catch (Exception e) {
                 log.error("作业 '{}' 执行失败: {}", jobName, e.getMessage(), e);
@@ -439,10 +442,7 @@ public class FlinkJobManager {
     public static class JobConfig {
         private String name;
         private String jobName;
-        private Runnable runnable;
-
-        public String getJobName() { return jobName; }
-        public Runnable getRunnable() { return runnable; }
+        private Supplier<Void> supplier;  // Supplier 延迟执行，返回 Void
     }
 
     @lombok.Data
