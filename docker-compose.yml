@@ -19,6 +19,8 @@ services:
       redis: { condition: service_healthy }
       clickhouse: { condition: service_healthy }
       mysql: { condition: service_healthy }
+      flink-jobmanager: { condition: service_healthy }
+      flink-sql-gateway: { condition: service_healthy }
       #kafka: { condition: service_healthy }
     # 资源限制 - 合并到一个 deploy 块
     deploy:
@@ -71,8 +73,8 @@ services:
       # ========================
       # Flink
       # ========================
-      FLINK_REST_URL: flink-jobmanager:8081
-      FLINK_SQL_GATEWAY_URL: flink-sql-gateway:8083
+      FLINK_REST_URL: http://flink-jobmanager:8081
+      FLINK_SQL_GATEWAY_URL: http://flink-sql-gateway:8083
     logging:
       driver: "json-file"
       options:
@@ -296,6 +298,19 @@ services:
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
       - JVM_ARGS=-Xms256m -Xmx512m
+      - |-
+        FLINK_PROPERTIES=
+        rest.bind-address: 0.0.0.0
+        rest.bind-port: 8081
+        jobmanager.rpc.address: flink-jobmanager
+        jobmanager.rpc.port: 6123
+    # 添加健康检查
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/overview" ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -358,6 +373,7 @@ services:
       - JVM_ARGS=-Xms128m -Xmx192m
       - |-
         FLINK_PROPERTIES=
+        rest.bind-address: 0.0.0.0
         jobmanager.rpc.address: flink-jobmanager
         state.checkpoints.dir: file:///opt/flink/checkpoints
     command: >
@@ -365,6 +381,13 @@ services:
       -Dsql-gateway.endpoint.rest.address=0.0.0.0
       -Dsql-gateway.endpoint.rest.port=8083
       -Djobmanager.rpc.address=flink-jobmanager
+    # 添加健康检查
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8083/v1/info" ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     deploy:
       resources:
         limits:

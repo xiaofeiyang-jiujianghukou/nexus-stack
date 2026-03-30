@@ -31,8 +31,7 @@ fi
 
 # 4. Flink JobManager 状态
 echo -n "4. Flink JobManager: "
-# JobManager 有 Web UI，检查 8081 端口
-if docker exec nexus-stack-jobmanager curl -s http://localhost:8081/overview > /dev/null 2>&1; then
+if docker exec nexus-stack-jobmanager wget -q -O- http://localhost:8081/overview > /dev/null 2>&1; then
     echo "✅ 正常"
 else
     echo "❌ 异常"
@@ -40,7 +39,6 @@ fi
 
 # 5. Flink TaskManager 状态
 echo -n "5. Flink TaskManager: "
-# TaskManager 没有 Web UI，检查进程是否存在
 if docker exec nexus-stack-taskmanager ps aux | grep -v grep | grep "TaskManager" > /dev/null 2>&1; then
     echo "✅ 正常"
 else
@@ -49,8 +47,7 @@ fi
 
 # 6. Flink SQL Gateway 状态
 echo -n "6. Flink SQL Gateway: "
-# SQL Gateway 有自己的 Web UI 在 8083
-if docker exec nexus-stack-sql-gateway curl -s http://localhost:8083/ > /dev/null 2>&1; then
+if docker exec nexus-stack-sql-gateway wget -q -O- http://localhost:8083/ > /dev/null 2>&1; then
     echo "✅ 正常"
 else
     echo "❌ 异常"
@@ -80,23 +77,58 @@ else
     echo "❌ 不通"
 fi
 
+# 10. Brain 到 Flink JobManager 连接
+echo -n "10. Brain -> Flink JobManager: "
+if docker exec nexus-stack-brain sh -c "timeout 3 nc -zv flink-jobmanager 8081" > /dev/null 2>&1; then
+    echo "✅ 连通"
+else
+    echo "❌ 不通"
+fi
+
+# 11. Brain 到 Flink SQL Gateway 连接
+echo -n "11. Brain -> Flink SQL Gateway: "
+if docker exec nexus-stack-brain sh -c "timeout 3 nc -zv flink-sql-gateway 8083" > /dev/null 2>&1; then
+    echo "✅ 连通"
+else
+    echo "❌ 不通"
+fi
+
+# 12. Brain 到 Flink JobManager HTTP API（使用 wget）
+echo -n "12. Brain -> Flink JobManager API: "
+if docker exec nexus-stack-brain sh -c "wget -q -O- http://flink-jobmanager:8081/overview > /dev/null 2>&1"; then
+    echo "✅ 可访问"
+else
+    echo "❌ 不可访问"
+fi
+
+# 13. Brain 到 Flink SQL Gateway HTTP API（使用 wget）
+echo -n "13. Brain -> Flink SQL Gateway API: "
+if docker exec nexus-stack-brain sh -c "wget -q -O- http://flink-sql-gateway:8083/v1/info > /dev/null 2>&1"; then
+    echo "✅ 可访问"
+else
+    echo "❌ 不可访问"
+fi
+
 echo ""
-echo "10. Brain 日志（最近3行）:"
+echo "14. Brain 日志（最近3行）:"
 docker logs nexus-stack-brain --tail=3 2>&1 | grep -v "WARN"
 
 echo ""
-echo "11. 容器资源使用:"
+echo "15. 容器资源使用:"
 docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" \
     $(docker ps --filter "name=nexus-stack" -q 2>/dev/null) 2>/dev/null
 
 echo ""
-echo "12. Flink 集群状态:"
+echo "16. Flink 集群状态:"
 
 # 获取 overview 数据
-OVERVIEW=$(docker exec nexus-stack-jobmanager curl -s http://localhost:8081/overview 2>/dev/null)
+OVERVIEW=$(docker exec nexus-stack-jobmanager wget -q -O- http://localhost:8081/overview 2>/dev/null)
 
 # TaskManagers 数量
-TM_COUNT=$(echo "$OVERVIEW" | sed -n 's/.*"taskmanagers":\([0-9]*\).*/\1/p')
+TM_COUNT=$(echo "$OVERVIEW" | grep -o '"taskmanakers":[0-9]*' | cut -d: -f2)
+if [ -z "$TM_COUNT" ]; then
+    TM_COUNT=$(echo "$OVERVIEW" | sed -n 's/.*"taskmanagers":\([0-9]*\).*/\1/p')
+fi
 echo "    TaskManagers: ${TM_COUNT:-0}"
 
 # Slots 总数
@@ -108,7 +140,7 @@ SLOTS_AVAILABLE=$(echo "$OVERVIEW" | sed -n 's/.*"slots-available":\([0-9]*\).*/
 echo "    Available Slots: ${SLOTS_AVAILABLE:-0}"
 
 # 获取 jobs overview 数据
-JOBS_OVERVIEW=$(docker exec nexus-stack-jobmanager curl -s http://localhost:8081/jobs/overview 2>/dev/null)
+JOBS_OVERVIEW=$(docker exec nexus-stack-jobmanager wget -q -O- http://localhost:8081/jobs/overview 2>/dev/null)
 
 # 运行中的 Jobs
 JOBS_RUNNING=$(echo "$JOBS_OVERVIEW" | sed -n 's/.*"running":\([0-9]*\).*/\1/p')
