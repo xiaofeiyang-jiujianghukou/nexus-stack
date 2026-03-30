@@ -1,4 +1,4 @@
-#version: '3.8'
+version: '3.8'
 
 services:
 
@@ -14,21 +14,26 @@ services:
       - nexus-stack-net
     ports:
       - "38080:8080"
-    # 👇 修正后的写法：策略和次数分开
     restart: on-failure
-    deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 5
     depends_on:
       redis: { condition: service_healthy }
       clickhouse: { condition: service_healthy }
       mysql: { condition: service_healthy }
       #kafka: { condition: service_healthy }
-    cpus: 0.3      # 限制 0.3 核
-    mem_limit: 768m  # 限制 768MB 内存
+    # 资源限制 - 合并到一个 deploy 块
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 768M
+        reservations:
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
     environment:
-      # JVM 网络
+      # JVM 内存优化
+      JAVA_OPTS: -Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
       JAVA_TOOL_OPTIONS: >
         -Djava.net.preferIPv4Stack=true
         -Djava.net.useSystemProxies=false
@@ -67,6 +72,11 @@ services:
       # Flink
       # ========================
       FLINK_SQL_GATEWAY_ADDRESS: flink-jobmanager:28081
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ========================
   # 前端
@@ -82,8 +92,18 @@ services:
       - "33000:80"
     depends_on:
       - brain
-    cpus: 0.1
-    mem_limit: 128m
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 128M
+        reservations:
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ========================
   # MySQL
@@ -103,17 +123,32 @@ services:
     volumes:
       - ./data/mysql/data:/var/lib/mysql
       - ./init/mysql/init:/docker-entrypoint-initdb.d
+      - ./mysql-conf:/etc/mysql/conf.d
     command:
       - --bind-address=0.0.0.0
       - --default-authentication-plugin=caching_sha2_password
+      - --innodb-buffer-pool-size=256M
+      - --innodb-log-file-size=64M
+      - --max-connections=100
+      - --innodb-temp-data-file-path=ibtmp1:12M:autoextend:max:256M
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s # 给 MySQL 30秒的启动缓冲期，这期间不算失败
-    cpus: 0.5      # MySQL 分配 0.5 核
-    mem_limit: 512m
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 768M
+        reservations:
+          memory: 384M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ========================
   # Redis
@@ -131,61 +166,84 @@ services:
       --requirepass 123456 
       --appendonly yes
       --appendfsync everysec
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
     volumes:
       - ./data/redis/data:/data
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a 123456 ping | grep PONG"]
       interval: 10s
       retries: 5
-    cpus: 0.2
-    mem_limit: 256m
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+        reservations:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-#  # ========================
-#  # Zookeeper
-#  # ========================
-#  zookeeper:
-#    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/cp-zookeeper:7.5.0
-#    container_name: nexus-stack-zookeeper
-#    networks:
-#      - nexus-stack-net
-#    environment:
-#      ZOOKEEPER_CLIENT_PORT: 2181
-#    volumes:
-#      - ./data/zookeeper/data:/var/lib/zookeeper/data
-#      - ./data/zookeeper/logs:/var/lib/zookeeper/log
-#
-#  # ========================
-#  # Kafka
-#  # ========================
-#  kafka:
-#    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/cp-kafka:7.5.0
-#    container_name: nexus-stack-kafka
-#    networks:
-#      - nexus-stack-net
-#    depends_on:
-#      - zookeeper
-#    ports:
-#      - "39092:39092"
-#      - "9092:9092"
-#    environment:
-#      KAFKA_BROKER_ID: 1
-#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-#
-#      # 内外双监听（关键）
-#      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:39092
-#      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:39092
-#
-#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-#      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-#
-#    volumes:
-#      - ./data/kafka/data:/var/lib/kafka/data
-#
-#    healthcheck:
-#      test: ["CMD", "bash", "-c", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
-#      interval: 10s
-#      retries: 5
+  #  # ========================
+  #  # Zookeeper
+  #  # ========================
+  #  zookeeper:
+  #    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/cp-zookeeper:7.5.0
+  #    container_name: nexus-stack-zookeeper
+  #    networks:
+  #      - nexus-stack-net
+  #    environment:
+  #      ZOOKEEPER_CLIENT_PORT: 2181
+  #      ZOOKEEPER_HEAP_OPTS: -Xms128m -Xmx256m
+  #    volumes:
+  #      - ./data/zookeeper/data:/var/lib/zookeeper/data
+  #      - ./data/zookeeper/logs:/var/lib/zookeeper/log
+  #    deploy:
+  #      resources:
+  #        limits:
+  #          cpus: '0.2'
+  #          memory: 512M
+  #        reservations:
+  #          memory: 256M
+  #
+  #  # ========================
+  #  # Kafka
+  #  # ========================
+  #  kafka:
+  #    image: crpi-27zlqugq2208c0pz.cn-hangzhou.personal.cr.aliyuncs.com/xiaofeiyang930112/cp-kafka:7.5.0
+  #    container_name: nexus-stack-kafka
+  #    networks:
+  #      - nexus-stack-net
+  #    depends_on:
+  #      - zookeeper
+  #    ports:
+  #      - "39092:39092"
+  #      - "9092:9092"
+  #    environment:
+  #      KAFKA_BROKER_ID: 1
+  #      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+  #      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:39092
+  #      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:39092
+  #      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+  #      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+  #      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #    volumes:
+  #      - ./data/kafka/data:/var/lib/kafka/data
+  #    healthcheck:
+  #      test: ["CMD", "bash", "-c", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+  #      interval: 10s
+  #      retries: 5
+  #    deploy:
+  #      resources:
+  #        limits:
+  #          cpus: '0.5'
+  #          memory: 1G
+  #        reservations:
+  #          memory: 512M
 
   # ========================
   # ClickHouse
@@ -199,6 +257,7 @@ services:
     environment:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: 123456
+      CLICKHOUSE_MAX_MEMORY_USAGE: 1073741824
     ports:
       - "38123:8123"
       - "39000:9000"
@@ -206,12 +265,23 @@ services:
       - ./data/clickhouse/data:/var/lib/clickhouse
       - ./data/clickhouse/logs:/var/log/clickhouse-server
       - ./init/clickhouse/init:/docker-entrypoint-initdb.d/
+      - ./clickhouse-config:/etc/clickhouse-server/config.d
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
       interval: 10s
       retries: 5
-    cpus: 0.5      # ClickHouse 分配 0.5 核
-    mem_limit: 1g   # ClickHouse 分配 1GB 内存
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 768M
+        reservations:
+          memory: 384M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ========================
   # Flink JobManager
@@ -224,14 +294,22 @@ services:
     command: jobmanager
     ports:
       - "38081:8081"
-      - "36123:6123"  # 添加 RPC 端口映射
+      - "36123:6123"
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
-#    volumes:
-#      - ./data/flink/checkpoints:/opt/flink/checkpoints
-#      - ./data/flink/savepoints:/opt/flink/savepoints
-    cpus: 0.2      # JobManager 只需要少量 CPU
-    mem_limit: 768m  # JobManager 内存
+      - JVM_ARGS=-Xms256m -Xmx512m
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 768M
+        reservations:
+          memory: 384M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ========================
   # Flink TaskManager
@@ -246,16 +324,24 @@ services:
     command: taskmanager
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - JVM_ARGS=-Xms512m -Xmx768m
       - |-
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
         state.checkpoints.dir: file:///opt/flink/checkpoints
         state.savepoints.dir: file:///opt/flink/savepoints
-#    volumes:
-#      - ./data/flink/checkpoints:/opt/flink/checkpoints
-#      - ./data/flink/savepoints:/opt/flink/savepoints
-    cpus: 0.8      # TaskManager 分配 0.8 核（核心计算）
-    mem_limit: 1.2g  # TaskManager 内存限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.8'
+          memory: 1.2G
+        reservations:
+          memory: 768M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ========================
   # Flink SQL Gateway
@@ -271,6 +357,7 @@ services:
       - "38083:8083"
     environment:
       - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - JVM_ARGS=-Xms128m -Xmx192m
       - |-
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
@@ -280,10 +367,18 @@ services:
       -Dsql-gateway.endpoint.rest.address=0.0.0.0
       -Dsql-gateway.endpoint.rest.port=8083
       -Djobmanager.rpc.address=flink-jobmanager
-#    volumes:
-#      - ./data/flink/checkpoints:/opt/flink/checkpoints
-    cpus: 0.1
-    mem_limit: 256m
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 256M
+        reservations:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   nexus-stack-net:
