@@ -30,10 +30,10 @@ public class FlinkJobManager {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    @Value("${flink.rest.url:http://172.17.0.1:38081}")
+    @Value("${flink.rest.url}")
     private String flinkRestUrl;
 
-    @Value("${flink.sql-gateway.url:http://172.17.0.1:38083}")
+    @Value("${flink.sql-gateway.url}")
     private String sqlGatewayUrl;
 
     @Value("${flink.job.auto-start:true}")

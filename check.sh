@@ -31,6 +31,7 @@ fi
 
 # 4. Flink JobManager 状态
 echo -n "4. Flink JobManager: "
+# JobManager 有 Web UI，检查 8081 端口
 if docker exec nexus-stack-jobmanager curl -s http://localhost:8081/overview > /dev/null 2>&1; then
     echo "✅ 正常"
 else
@@ -39,7 +40,8 @@ fi
 
 # 5. Flink TaskManager 状态
 echo -n "5. Flink TaskManager: "
-if docker exec nexus-stack-taskmanager curl -s http://localhost:8081/overview > /dev/null 2>&1; then
+# TaskManager 没有 Web UI，检查进程是否存在
+if docker exec nexus-stack-taskmanager ps aux | grep -v grep | grep "TaskManager" > /dev/null 2>&1; then
     echo "✅ 正常"
 else
     echo "❌ 异常"
@@ -47,6 +49,7 @@ fi
 
 # 6. Flink SQL Gateway 状态
 echo -n "6. Flink SQL Gateway: "
+# SQL Gateway 有自己的 Web UI 在 8083
 if docker exec nexus-stack-sql-gateway curl -s http://localhost:8083/ > /dev/null 2>&1; then
     echo "✅ 正常"
 else
@@ -93,10 +96,7 @@ echo "12. Flink 集群状态:"
 OVERVIEW=$(docker exec nexus-stack-jobmanager curl -s http://localhost:8081/overview 2>/dev/null)
 
 # TaskManagers 数量
-TM_COUNT=$(echo "$OVERVIEW" | grep -o '"taskmanakers":[0-9]*' 2>/dev/null || echo "")
-if [ -z "$TM_COUNT" ]; then
-    TM_COUNT=$(echo "$OVERVIEW" | sed -n 's/.*"taskmanagers":\([0-9]*\).*/\1/p')
-fi
+TM_COUNT=$(echo "$OVERVIEW" | sed -n 's/.*"taskmanagers":\([0-9]*\).*/\1/p')
 echo "    TaskManagers: ${TM_COUNT:-0}"
 
 # Slots 总数

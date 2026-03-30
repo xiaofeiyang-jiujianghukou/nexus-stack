@@ -40,8 +40,9 @@ kafka:
 
 flink:
   rest:
-    address: ${FLINK_SQL_GATEWAY_ADDRESS}
-
+    url: ${FLINK_REST_URL}
+  sql-gateway:
+    url: ${FLINK_SQL_GATEWAY_URL}
 
 # 日志配置 (可选)
 logging:

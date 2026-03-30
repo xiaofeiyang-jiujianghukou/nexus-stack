@@ -35,6 +35,12 @@ flink:
   rest:
     address: localhost:3081
 
+flink:
+  rest:
+    url: localhost:38081
+  sql-gateway:
+    url: localhost:38083
+
 # 日志配置 (可选)
 logging:
   level:
