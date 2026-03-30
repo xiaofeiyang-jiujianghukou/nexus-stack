@@ -1,5 +1,4 @@
 # 一键检查所有服务
-cat > check-all.sh << 'EOF'
 #!/bin/bash
 
 echo "========================================="
@@ -47,6 +46,3 @@ echo "6. 容器资源使用:"
 docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" \
     $(docker ps --filter "name=nexus-stack" -q)
 EOF
-
-chmod +x check-all.sh
-./check-all.sh
