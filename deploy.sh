@@ -63,7 +63,7 @@ case $choice in
         sudo chown -R $(id -u):$(id -g) data/kafka 2>/dev/null
 
 
-        sudo chmod +x clear_nexus_stack.sh monitor-nexus.sh cleck.sh
+        sudo chmod +x clear_nexus_stack.sh monitor-nexus.sh check.sh
 
 
         echo "✅ 权限设置完成"
