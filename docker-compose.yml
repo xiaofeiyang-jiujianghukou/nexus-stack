@@ -71,7 +71,7 @@ services:
       # ========================
       # Flink
       # ========================
-      FLINK_SQL_GATEWAY_ADDRESS: flink-jobmanager:28081
+      FLINK_SQL_GATEWAY_ADDRESS: flink-jobmanager:8081
     logging:
       driver: "json-file"
       options:
