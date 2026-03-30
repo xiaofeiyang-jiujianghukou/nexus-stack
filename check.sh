@@ -45,9 +45,9 @@ else
     echo "❌ 异常"
 fi
 
-# 6. Flink SQL Gateway 状态
+# 6. Flink SQL Gateway 状态（使用正确的端点）
 echo -n "6. Flink SQL Gateway: "
-if docker exec nexus-stack-sql-gateway wget -q -O- http://localhost:8083/ > /dev/null 2>&1; then
+if docker exec nexus-stack-sql-gateway wget -q -O- http://localhost:8083/v1/info 2>/dev/null | grep -q "productName"; then
     echo "✅ 正常"
 else
     echo "❌ 异常"

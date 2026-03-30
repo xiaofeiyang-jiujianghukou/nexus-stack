@@ -23,16 +23,16 @@ services:
       flink-sql-gateway: { condition: service_healthy }
       #kafka: { condition: service_healthy }
     # 资源限制 - 合并到一个 deploy 块
-    deploy:
-      resources:
-        limits:
-          cpus: '0.3'
-          memory: 768M
-        reservations:
-          memory: 256M
-      restart_policy:
-        condition: on-failure
-        max_attempts: 5
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.5'
+#          memory: 1G
+#        reservations:
+#          memory: 256M
+#      restart_policy:
+#        condition: on-failure
+#        max_attempts: 5
     environment:
       # JVM 内存优化
       JAVA_OPTS: -Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200
@@ -95,13 +95,13 @@ services:
       - "33000:80"
     depends_on:
       - brain
-    deploy:
-      resources:
-        limits:
-          cpus: '0.1'
-          memory: 128M
-        reservations:
-          memory: 64M
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.1'
+#          memory: 128M
+#        reservations:
+#          memory: 64M
     logging:
       driver: "json-file"
       options:
@@ -140,13 +140,13 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 1G
-        reservations:
-          memory: 512M
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.5'
+#          memory: 1G
+#        reservations:
+#          memory: 512M
     logging:
       driver: "json-file"
       options:
@@ -177,11 +177,11 @@ services:
       test: ["CMD-SHELL", "redis-cli -a 123456 ping | grep PONG"]
       interval: 10s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 256M
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.2'
+#          memory: 256M
     logging:
       driver: "json-file"
       options:
@@ -270,13 +270,13 @@ services:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
       interval: 10s
       retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: '0.8'
-          memory: 1G
-        reservations:
-          memory: 512M
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.8'
+#          memory: 1G
+#        reservations:
+#          memory: 512M
     logging:
       driver: "json-file"
       options:
@@ -311,13 +311,13 @@ services:
       timeout: 5s
       retries: 30
       start_period: 60s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 768M
-        reservations:
-          memory: 384M
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.2'
+#          memory: 768M
+#        reservations:
+#          memory: 384M
     logging:
       driver: "json-file"
       options:
@@ -343,13 +343,13 @@ services:
         jobmanager.rpc.address: flink-jobmanager
         state.checkpoints.dir: file:///opt/flink/checkpoints
         state.savepoints.dir: file:///opt/flink/savepoints
-    deploy:
-      resources:
-        limits:
-          cpus: '0.8'
-          memory: 1G
-        reservations:
-          memory: 768M
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.8'
+#          memory: 1G
+#        reservations:
+#          memory: 768M
     logging:
       driver: "json-file"
       options:
@@ -388,13 +388,11 @@ services:
       timeout: 5s
       retries: 30
       start_period: 60s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.1'
-          memory: 256M
-        reservations:
-          memory: 128M
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.1'
+#          memory: 256M
     logging:
       driver: "json-file"
       options:
