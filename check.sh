@@ -15,10 +15,11 @@ fi
 
 echo ""
 echo "2. MySQL 状态:"
-if docker exec nexus-stack-mysql mysql -p123456 -e "SELECT 1" 2>/dev/null; then
+if docker exec nexus-stack-mysql mysql -uroot -p123456 -e "SELECT 1" 2>/dev/null; then
     echo "✅ MySQL 正常"
 else
     echo "❌ MySQL 异常"
+    echo "   尝试手动测试: docker exec nexus-stack-mysql mysql -uroot -p123456 -e 'SELECT 1'"
 fi
 
 echo ""
