@@ -1,14 +1,14 @@
 #version: '3.8'
 
-services:
+# 定义日志模板
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"      # 单个日志文件最大10MB
+    max-file: "3"        # 保留3个文件
+    compress: "true"     # 压缩旧日志
 
-  # 定义日志模板
-  x-logging: &default-logging
-    driver: "json-file"
-    options:
-      max-size: "10m"      # 单个日志文件最大10MB
-      max-file: "3"        # 保留3个文件
-      compress: "true"     # 压缩旧日志
+services:
 
   # ========================
   # 后端服务
@@ -218,7 +218,7 @@ services:
       - ./data/clickhouse/data:/var/lib/clickhouse
       #- ./data/clickhouse/logs:/var/log/clickhouse-server
       - ./init/clickhouse/init:/docker-entrypoint-initdb.d/
-      - ./config/clickhouse/config.d:/etc/clickhouse-server/config.d
+      #- ./config/clickhouse/config.d:/etc/clickhouse-server/config.d
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
       interval: 10s
@@ -280,7 +280,6 @@ services:
         state.checkpoints.num-retained: 3  # 只保留最近3个检查点
         state.checkpoints.cleaner.interval: 3600000  # 每小时清理一次
         state.backend: hashmap
-        taskmanager.memory.process.size: 1024m  # 限制内存
     logging: *default-logging
 
   # ========================

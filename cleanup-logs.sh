@@ -39,5 +39,9 @@ find $PROJECT_DIR/data -name "*.log" -size +10M -exec truncate -s 0 {} \;
 echo "清理 Docker 资源..."
 docker system prune -f --filter "label=com.docker.compose.project=nexus-stack" 2>/dev/null
 
+# 7. 清理未使用的 Docker 容器资源
+echo "清理 Docker 容器 资源..."
+docker container prune -f
+
 echo "=== 清理完成 ==="
 df -h
