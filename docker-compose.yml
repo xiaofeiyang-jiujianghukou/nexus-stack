@@ -2,6 +2,14 @@
 
 services:
 
+  # 定义日志模板
+  x-logging: &default-logging
+    driver: "json-file"
+    options:
+      max-size: "10m"      # 单个日志文件最大10MB
+      max-file: "3"        # 保留3个文件
+      compress: "true"     # 压缩旧日志
+
   # ========================
   # 后端服务
   # ========================
@@ -64,11 +72,7 @@ services:
       # ========================
       FLINK_REST_URL: http://flink-jobmanager:8081
       FLINK_SQL_GATEWAY_URL: http://flink-sql-gateway:8083
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *default-logging
 
   # ========================
   # 前端
@@ -122,11 +126,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *default-logging
 
   # ========================
   # Redis
@@ -152,11 +152,7 @@ services:
       test: ["CMD-SHELL", "redis-cli -a 123456 ping | grep PONG"]
       interval: 10s
       retries: 5
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *default-logging
 
   #  # ========================
   #  # Zookeeper
@@ -222,16 +218,12 @@ services:
       - ./data/clickhouse/data:/var/lib/clickhouse
       #- ./data/clickhouse/logs:/var/log/clickhouse-server
       - ./init/clickhouse/init:/docker-entrypoint-initdb.d/
-      - ./clickhouse-conf/config.d:/etc/clickhouse-server/config.d
+      - ./config/clickhouse/config.d:/etc/clickhouse-server/config.d
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
       interval: 10s
       retries: 5
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *default-logging
 
   # ========================
   # Flink JobManager
@@ -254,6 +246,8 @@ services:
         rest.bind-port: 8081
         jobmanager.rpc.address: flink-jobmanager
         jobmanager.rpc.port: 6123
+        state.checkpoints.num-retained: 3  # 只保留最近3个检查点
+        state.checkpoints.cleaner.interval: 3600000  # 每小时清理
     # 添加健康检查
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8081/overview" ]
@@ -261,11 +255,7 @@ services:
       timeout: 5s
       retries: 30
       start_period: 60s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *default-logging
 
   # ========================
   # Flink TaskManager
@@ -286,11 +276,12 @@ services:
         jobmanager.rpc.address: flink-jobmanager
         state.checkpoints.dir: file:///opt/flink/checkpoints
         state.savepoints.dir: file:///opt/flink/savepoints
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+        # 添加这些配置
+        state.checkpoints.num-retained: 3  # 只保留最近3个检查点
+        state.checkpoints.cleaner.interval: 3600000  # 每小时清理一次
+        state.backend: hashmap
+        taskmanager.memory.process.size: 1024m  # 限制内存
+    logging: *default-logging
 
   # ========================
   # Flink SQL Gateway
@@ -324,11 +315,7 @@ services:
       timeout: 5s
       retries: 30
       start_period: 60s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *default-logging
 
 networks:
   nexus-stack-net:
